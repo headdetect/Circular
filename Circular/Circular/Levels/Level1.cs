@@ -2,26 +2,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Circular.Helpers;
+using Circular.Utils;
 using FarseerPhysics;
+using FarseerPhysics.Collision.Shapes;
 using FarseerPhysics.Common;
 using FarseerPhysics.Dynamics;
+using FarseerPhysics.Dynamics.Joints;
 using FarseerPhysics.Factories;
-using FluxEngine.Entity;
+using Circular.Display;
+using Circular.Entity;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace Circular.Levels {
     public class Level1 : LevelBase {
-        public Level1 ( CircularGame game ) : base( game ) { }
 
         private float _acceleration;
         private Body _board;
-        private Sprite _box;
+        private TextureSprite _box;
         private List<Body> _boxes;
 
-        private Sprite _bridge;
+        private TextureSprite _bridge;
         private List<Body> _bridgeSegments;
         private Body _car;
-        private Sprite _carBody;
+        private TextureSprite _carBody;
         private Body _ground;
         private float _hzBack;
         private float _hzFront;
@@ -29,66 +35,102 @@ namespace Circular.Levels {
 
         private WheelJoint _springBack;
         private WheelJoint _springFront;
-        private Sprite _teeter;
-        private Sprite _wheel;
+        private TextureSprite _teeter;
+        private TextureSprite _wheel;
         private Body _wheelBack;
         private Body _wheelFront;
         private float _zeta;
 
+        private ParallaxingBackgrounds bg;
 
-        public override void Init () {
+        #region Demo description
+        public override string GetTitle () {
+            return "Tutorial";
+        }
+
+        public override string GetDetails () {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine( "This demo shows a side scrolling car on a race track." );
+            sb.AppendLine( "The car uses two wheel joints, which combine a revolute and" );
+            sb.AppendLine( "a (soft) distance joint for the tire suspension." );
+            sb.AppendLine( "The track is composed of several edge shapes and different" );
+            sb.AppendLine( "obstacles are attached to the track." );
+            sb.AppendLine();
+            sb.AppendLine( "GamePad:" );
+            sb.AppendLine( "  - Accelerate / reverse: Left thumbstick" );
+            sb.AppendLine( "  - Break: A button" );
+            sb.Append( "  - Exit to demo selection: Back button" );
+#if WINDOWS
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.AppendLine( "Keyboard:" );
+            sb.AppendLine( "  - Accelerate / reverse: D / A" );
+            sb.AppendLine( "  - Break: S" );
+            sb.Append( "  - Exit to demo selection: Escape" );
+#endif
+            return sb.ToString();
+        }
+        #endregion
+
+        public override void LoadContent () {
+            base.LoadContent();
 
             World.Gravity = new Vector2( 0f, 10f );
+
+            HasCursor = false;
+            EnableCameraControl = true;
+
             _hzFront = 8.5f;
             _hzBack = 5.0f;
-            _zeta = 0.85f;
+            _zeta = 1f;
             _maxSpeed = 50.0f;
+
+            bg = new ParallaxingBackgrounds( Framework );
 
             // terrain
             _ground = new Body( World );
             {
-                Vertices terrain = new Vertices {
-                                                    new Vector2 ( -20f, -5f ),
-                                                    new Vector2 ( -20f, 0f ),
-                                                    new Vector2 ( 20f, 0f ),
-                                                    new Vector2 ( 25f, -0.25f ),
-                                                    new Vector2 ( 30f, -1f ),
-                                                    new Vector2 ( 35f, -4f ),
-                                                    new Vector2 ( 40f, 0f ),
-                                                    new Vector2 ( 45f, 0f ),
-                                                    new Vector2 ( 50f, 1f ),
-                                                    new Vector2 ( 55f, 2f ),
-                                                    new Vector2 ( 60f, 2f ),
-                                                    new Vector2 ( 65f, 1.25f ),
-                                                    new Vector2 ( 70f, 0f ),
-                                                    new Vector2 ( 75f, -0.3f ),
-                                                    new Vector2 ( 80f, -1.5f ),
-                                                    new Vector2 ( 85f, -3.5f ),
-                                                    new Vector2 ( 90f, 0f ),
-                                                    new Vector2 ( 95f, 0.5f ),
-                                                    new Vector2 ( 100f, 1f ),
-                                                    new Vector2 ( 105f, 2f ),
-                                                    new Vector2 ( 110f, 2.5f ),
-                                                    new Vector2 ( 115f, 1.3f ),
-                                                    new Vector2 ( 120f, 0f ),
-                                                    new Vector2 ( 160f, 0f ),
-                                                    new Vector2 ( 159f, 10f ),
-                                                    new Vector2 ( 201f, 10f ),
-                                                    new Vector2 ( 200f, 0f ),
-                                                    new Vector2 ( 240f, 0f ),
-                                                    new Vector2 ( 250f, -5f ),
-                                                    new Vector2 ( 250f, 10f ),
-                                                    new Vector2 ( 270f, 10f ),
-                                                    new Vector2 ( 270f, 0 ),
-                                                    new Vector2 ( 310f, 0 ),
-                                                    new Vector2 ( 310f, -5 )
-                                                };
+                Vertices terrain = new Vertices();
+                terrain.Add( new Vector2( -20f, -5f ) );
+                terrain.Add( new Vector2( -20f, 0f ) );
+                terrain.Add( new Vector2( 20f, 0f ) );
+                terrain.Add( new Vector2( 25f, -0.25f ) );
+                terrain.Add( new Vector2( 30f, -1f ) );
+                terrain.Add( new Vector2( 35f, -4f ) );
+                terrain.Add( new Vector2( 40f, 0f ) );
+                terrain.Add( new Vector2( 45f, 0f ) );
+                terrain.Add( new Vector2( 50f, 1f ) );
+                terrain.Add( new Vector2( 55f, 2f ) );
+                terrain.Add( new Vector2( 60f, 2f ) );
+                terrain.Add( new Vector2( 65f, 1.25f ) );
+                terrain.Add( new Vector2( 70f, 0f ) );
+                terrain.Add( new Vector2( 75f, -0.3f ) );
+                terrain.Add( new Vector2( 80f, -1.5f ) );
+                terrain.Add( new Vector2( 85f, -3.5f ) );
+                terrain.Add( new Vector2( 90f, 0f ) );
+                terrain.Add( new Vector2( 95f, 0.5f ) );
+                terrain.Add( new Vector2( 100f, 1f ) );
+                terrain.Add( new Vector2( 105f, 2f ) );
+                terrain.Add( new Vector2( 110f, 2.5f ) );
+                terrain.Add( new Vector2( 115f, 1.3f ) );
+                terrain.Add( new Vector2( 120f, 0f ) );
+                terrain.Add( new Vector2( 160f, 0f ) );
+                terrain.Add( new Vector2( 159f, 10f ) );
+                terrain.Add( new Vector2( 201f, 10f ) );
+                terrain.Add( new Vector2( 200f, 0f ) );
+                terrain.Add( new Vector2( 240f, 0f ) );
+                terrain.Add( new Vector2( 250f, -5f ) );
+                terrain.Add( new Vector2( 250f, 10f ) );
+                terrain.Add( new Vector2( 270f, 10f ) );
+                terrain.Add( new Vector2( 270f, 0 ) );
+                terrain.Add( new Vector2( 310f, 0 ) );
+                terrain.Add( new Vector2( 310f, -5 ) );
 
                 for ( int i = 0; i < terrain.Count - 1; ++i ) {
                     FixtureFactory.AttachEdge( terrain[ i ], terrain[ i + 1 ], _ground );
                 }
 
-                _ground.Friction = 0.6f;
+                _ground.Friction = 1f;
             }
 
             // teeter board
@@ -99,7 +141,7 @@ namespace Circular.Levels {
 
                 PolygonShape box = new PolygonShape( 1f );
                 box.Vertices = PolygonTools.CreateRectangle( 10.0f, 0.25f );
-                _teeter = new Sprite( ContentWrapper.TextureFromShape( box, "stripe", ContentWrapper.Gold, ContentWrapper.Black, ContentWrapper.Black, 1f ) );
+                _teeter = new TextureSprite( Framework, ContentWrapper.TextureFromShape( box, "stripe", ContentWrapper.Gold, ContentWrapper.Black, ContentWrapper.Black, 1f ) );
 
                 _board.CreateFixture( box );
 
@@ -120,7 +162,7 @@ namespace Circular.Levels {
                 PolygonShape shape = new PolygonShape( 1f );
                 shape.Vertices = PolygonTools.CreateRectangle( 1.0f, 0.125f );
 
-                _bridge = new Sprite( ContentWrapper.TextureFromShape( shape, ContentWrapper.Gold, ContentWrapper.Black ) );
+                _bridge = new TextureSprite( Framework, ContentWrapper.TextureFromShape( shape, ContentWrapper.Gold, ContentWrapper.Black ) );
 
                 Body prevBody = _ground;
                 for ( int i = 0; i < segmentCount; ++i ) {
@@ -142,7 +184,7 @@ namespace Circular.Levels {
                 _boxes = new List<Body>();
                 PolygonShape box = new PolygonShape( 1f );
                 box.Vertices = PolygonTools.CreateRectangle( 0.5f, 0.5f );
-                _box = new Sprite( ContentWrapper.TextureFromShape( box, "square", ContentWrapper.Sky, ContentWrapper.Sunset, ContentWrapper.Black, 1f ) );
+                _box = new TextureSprite( Framework, ContentWrapper.TextureFromShape( box, "square", ContentWrapper.Sky, ContentWrapper.Sunset, ContentWrapper.Black, 1f ) );
 
                 Body body = new Body( World );
                 body.BodyType = BodyType.Dynamic;
@@ -175,7 +217,7 @@ namespace Circular.Levels {
                 vertices.Add( new Vector2( 2.3f, 0.33f ) );
                 vertices.Add( new Vector2( -2.25f, 0.35f ) );
 
-                PolygonShape chassis = new PolygonShape( vertices, 2f );
+                PolygonShape chassis = new PolygonShape( vertices, 1f );
 
                 _car = new Body( World );
                 _car.BodyType = BodyType.Dynamic;
@@ -185,8 +227,8 @@ namespace Circular.Levels {
                 _wheelBack = new Body( World );
                 _wheelBack.BodyType = BodyType.Dynamic;
                 _wheelBack.Position = new Vector2( -1.709f, -0.78f );
-                Fixture fix = _wheelBack.CreateFixture( new CircleShape( 0.5f, 0.8f ) );
-                fix.Friction = 0.9f;
+                Fixture fix = _wheelBack.CreateFixture( new CircleShape( 0.5f, 1f ) );
+                fix.Friction = 3f;
 
                 _wheelFront = new Body( World );
                 _wheelFront.BodyType = BodyType.Dynamic;
@@ -196,7 +238,7 @@ namespace Circular.Levels {
                 Vector2 axis = new Vector2( 0.0f, -1.2f );
                 _springBack = new WheelJoint( _car, _wheelBack, _wheelBack.Position, axis );
                 _springBack.MotorSpeed = 0.0f;
-                _springBack.MaxMotorTorque = 20.0f;
+                _springBack.MaxMotorTorque = 40.0f;
                 _springBack.MotorEnabled = true;
                 _springBack.SpringFrequencyHz = _hzBack;
                 _springBack.SpringDampingRatio = _zeta;
@@ -204,7 +246,7 @@ namespace Circular.Levels {
 
                 _springFront = new WheelJoint( _car, _wheelFront, _wheelFront.Position, axis );
                 _springFront.MotorSpeed = 0.0f;
-                _springFront.MaxMotorTorque = 10.0f;
+                _springFront.MaxMotorTorque = 20.0f;
                 _springFront.MotorEnabled = false;
                 _springFront.SpringFrequencyHz = _hzFront;
                 _springFront.SpringDampingRatio = _zeta;
@@ -212,26 +254,22 @@ namespace Circular.Levels {
 
                 // GFX
 
-                _carBody = new Sprite( ContentWrapper.GetTexture( "car" ), ContentWrapper.CalculateOrigin( _car ) );
-                _wheel = new Sprite( ContentWrapper.GetTexture( "wheel" ) );
+                _carBody = new TextureSprite( Framework, ContentWrapper.GetTexture( "car" ), ContentWrapper.CalculateOrigin( _car ) );
+                _wheel = new TextureSprite( Framework, ContentWrapper.GetTexture( "wheel" ) );
             }
 
-            Camera.MinRotation = -0.05f;
-            Camera.MaxRotation = 0.05f;
+            Framework.Camera.MinRotation = -0.05f;
+            Framework.Camera.MaxRotation = 0.05f;
 
-            Camera.TrackingBody = _car;
-            Camera.EnableTracking = true;
+            Framework.Camera.TrackingBody = _car;
+            Framework.Camera.EnableTracking = true;
         }
 
         public override void Update ( GameTime gameTime, bool otherScreenHasFocus, bool coveredByOtherScreen ) {
+            bg.Update( gameTime );
             _springBack.MotorSpeed = Math.Sign( _acceleration ) *
                                      MathHelper.SmoothStep( 0f, _maxSpeed, Math.Abs( _acceleration ) );
-            if ( Math.Abs( _springBack.MotorSpeed ) < _maxSpeed * 0.06f ) {
-                _springBack.MotorEnabled = false;
-            }
-            else {
-                _springBack.MotorEnabled = true;
-            }
+            _springBack.MotorEnabled = !( Math.Abs( _springBack.MotorSpeed ) < _maxSpeed * 0.06f );
             base.Update( gameTime, otherScreenHasFocus, coveredByOtherScreen );
         }
 
@@ -253,6 +291,8 @@ namespace Circular.Levels {
         }
 
         public override void Draw ( GameTime gameTime ) {
+            bg.Draw( gameTime );
+
             Sprites.Begin( 0, null, null, null, null, null, Camera.View );
             // draw car
             Sprites.Draw( _wheel.Image, ConvertUnits.ToDisplayUnits( _wheelBack.Position ), null, Color.White, _wheelBack.Rotation, _wheel.Origin, 1f, SpriteEffects.None, 0f );
@@ -273,21 +313,14 @@ namespace Circular.Levels {
             Lines.Begin( Camera.SimProjection, Camera.SimView );
             // draw ground
             for ( int i = 0; i < _ground.FixtureList.Count; ++i ) {
-                Lines.DrawLineShape( _ground.FixtureList[ i ].Shape, Color.Black );
+                Lines.DrawLineShape( _ground.FixtureList[ i ].Shape, Color.Purple );
             }
             Lines.End();
+
+            
             base.Draw( gameTime );
         }
-        public override void Init () {
 
-        }
 
-        public override void Update ( GameTime gameTime ) {
-
-        }
-
-        public override void Draw ( GameTime gameTime ) {
-
-        }
     }
 }

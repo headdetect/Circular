@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using Circular.Managers;
-using FluxEngine.Display;
+using Circular.Display;
 using Microsoft.Xna.Framework;
 
 namespace Circular.Display {

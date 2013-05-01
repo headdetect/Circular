@@ -1,4 +1,5 @@
-﻿using FluxEngine;
+﻿using Circular.Display;
+using Circular.Utils;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Circular.Managers {
@@ -22,14 +23,14 @@ namespace Circular.Managers {
 
         #endregion
 
-        public ContentManager ( BaseFluxGame fluxGame ) {
-            BG1 = fluxGame.Content.Load<Texture2D>( "Images/Backgrounds/LayerOne" );
-            BG2 = fluxGame.Content.Load<Texture2D>( "Images/Backgrounds/LayerTwo" );
-            BG3 = fluxGame.Content.Load<Texture2D>( "Images/Backgrounds/LayerThree" );
+        public ContentManager ( CircularGame fluxGame ) {
+            BG1 = ContentWrapper.GetTexture("LayerOne" );
+            BG2 = ContentWrapper.GetTexture( "LayerTwo" );
+            BG3 = ContentWrapper.GetTexture( "LayerThree" );
 
-            CursorTexture = fluxGame.Content.Load<Texture2D>( "Images/CursorTexture" );
+            CursorTexture = ContentWrapper.GetTexture( "CursorTexture" );
 
-            FPSFont = fluxGame.Content.Load<SpriteFont>( "Fonts/fpsfont" );
+            FPSFont = ContentWrapper.GetFont( "fpsfont" );
         }
     }
 }

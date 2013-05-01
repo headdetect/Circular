@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Circular.Managers;
-using FluxEngine;
-using FluxEngine.Entity;
+using Circular;
+using Circular.Entity;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Circular.Entity {
     public class ParallaxingBackgrounds : Sprite {
 
-        public ParallaxingBackgrounds ( BaseFluxGame fluxGame ) : base( fluxGame ) { }
+        public ParallaxingBackgrounds ( CircularGame fluxGame ) : base( fluxGame ) { }
 
         public override Vector2 Position { get; set; }
         public override float Rotation { get; set; }
@@ -27,10 +27,10 @@ namespace Circular.Entity {
             float cameraX = Game.Camera.Position.X;
             float cameraY = Game.Camera.Position.Y;
 
-            spriteBatch.Begin( SpriteSortMode.BackToFront, BlendState.AlphaBlend, SamplerState.PointWrap, null, null );
-            spriteBatch.Draw( ContentManager.BG1, Position + Layer1, new Rectangle( Convert.ToInt32( cameraX * .8f ), 0, Width, Height ), Color.White );
-            spriteBatch.Draw( ContentManager.BG2, Position + Layer2, new Rectangle( Convert.ToInt32( cameraX * 0.5f ), 0, Width, Height ), Color.White );
-            spriteBatch.Draw( ContentManager.BG3, Position, new Rectangle( Convert.ToInt32( cameraX * 0.3f ), 0, Width, Height ), Color.White );
+            spriteBatch.Begin( SpriteSortMode.BackToFront, BlendState.AlphaBlend, SamplerState.LinearWrap, null, null );
+            spriteBatch.Draw( ContentManager.BG1, Position + Layer1 + new Vector2(0, cameraY * .2f), new Rectangle( Convert.ToInt32( cameraX * .8f ), 0, Width, Height ), Color.White );
+            spriteBatch.Draw( ContentManager.BG2, Position + Layer2 + new Vector2( 0, cameraY * .1f ), new Rectangle( Convert.ToInt32( cameraX * 0.5f ), 0, Width, Height ), Color.White );
+            spriteBatch.Draw( ContentManager.BG3, Position + new Vector2( 0, cameraY * .08f ), new Rectangle( Convert.ToInt32( cameraX * 0.3f ), 0, Width, Height ), Color.White );
             spriteBatch.End();
         }
 
