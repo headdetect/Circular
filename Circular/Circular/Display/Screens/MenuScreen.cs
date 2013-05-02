@@ -64,7 +64,7 @@ namespace Circular.Display.Screens {
             Viewport viewport = Framework.GraphicsDevice.Viewport;
 
             _font = ContentWrapper.GetFont( "fpsfont" );
-            _samplesLogo = ContentWrapper.GetTexture( "samplesLogo" );
+            _samplesLogo = ContentWrapper.GetTexture( "header" );
 
             _titleOrigin = new Vector2( _samplesLogo.Width, _samplesLogo.Height ) / 2f;
             _titlePosition = new Vector2( viewport.Width / 2f, TitleBarHeight / 2f );

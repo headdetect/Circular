@@ -12,9 +12,6 @@ using Circular.Managers;
 using FarseerPhysics;
 using FarseerPhysics.DebugView;
 using FarseerPhysics.Dynamics;
-using Circular;
-using Circular.Display;
-using Circular.Managers;
 using Circular.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -109,6 +106,7 @@ namespace Circular {
 #endif
 
             ContentWrapper.Initialize( this );
+            TextureManager = new ContentManager( this );
 
             Camera = new Camera( GraphicsDevice );
             HUD = new HUD( this );
@@ -142,7 +140,7 @@ namespace Circular {
             _quadRenderer = new QuadRenderer( GraphicsDevice );
             _lineBatch = new LineBatch( GraphicsDevice );
 
-            TextureManager = new ContentManager( this );
+            
             HUD.Initialize();
 
             _input.LoadContent( GraphicsDevice.Viewport );

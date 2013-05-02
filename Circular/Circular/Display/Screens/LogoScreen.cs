@@ -9,7 +9,7 @@ namespace Circular.Display.Screens
     {
         private TimeSpan _duration;
         private Texture2D _farseerLogoTexture;
-        private Vector2 _farseerLogoPosition;
+        private int width, height;
 
         public LogoScreen(TimeSpan duration)
         {
@@ -29,8 +29,8 @@ namespace Circular.Display.Screens
         {
             _farseerLogoTexture = ContentWrapper.GetTexture("logo");
             Viewport viewport = Framework.GraphicsDevice.Viewport;
-
-            _farseerLogoPosition = new Vector2((viewport.Width - _farseerLogoTexture.Width) / 2f - 100f, (viewport.Height - _farseerLogoTexture.Height) / 2f);
+            width = viewport.Width;
+            height = viewport.Height;
         }
 
         public override void HandleInput(InputHelper input, GameTime gameTime)
@@ -56,8 +56,8 @@ namespace Circular.Display.Screens
         {
             Framework.GraphicsDevice.Clear(Color.White);
 
-            Sprites.Begin();
-            Sprites.Draw(_farseerLogoTexture, _farseerLogoPosition, Color.White);
+            Sprites.Begin(SpriteSortMode.Texture, BlendState.Opaque, SamplerState.AnisotropicClamp, null, RasterizerState.CullNone);
+            Sprites.Draw(_farseerLogoTexture, new Rectangle(0, 0, width, height), Color.White);
             Sprites.End();
         }
     }

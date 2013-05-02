@@ -112,6 +112,7 @@
   <ItemGroup>
     <Compile Include="Display\Camera.cs" />
     <Compile Include="Display\Cursor.cs" />
+    <Compile Include="Display\Effects\GaussianBlur.cs" />
     <Compile Include="Display\FarseerPhysicsDebugViewXNA.cs" />
     <Compile Include="Display\GameScreen.cs" />
     <Compile Include="Display\HUD.cs" />

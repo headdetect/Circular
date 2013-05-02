@@ -86,6 +86,7 @@ namespace Circular.Levels {
             _maxSpeed = 50.0f;
 
             bg = new ParallaxingBackgrounds( Framework );
+            bg.Init();
 
             // terrain
             _ground = new Body( World );
@@ -308,14 +309,13 @@ namespace Circular.Levels {
             for ( int i = 0; i < _boxes.Count; ++i ) {
                 Sprites.Draw( _box.Image, ConvertUnits.ToDisplayUnits( _boxes[ i ].Position ), null, Color.White, _boxes[ i ].Rotation, _box.Origin, 1f, SpriteEffects.None, 0f );
             }
-            Sprites.End();
 
-            Lines.Begin( Camera.SimProjection, Camera.SimView );
             // draw ground
             for ( int i = 0; i < _ground.FixtureList.Count; ++i ) {
-                Lines.DrawLineShape( _ground.FixtureList[ i ].Shape, Color.Purple );
+                Lines.DrawLineShape( Sprites, _ground.FixtureList[ i ].Shape, Color.Purple, 7 );
             }
-            Lines.End();
+
+            Sprites.End();
 
             
             base.Draw( gameTime );
