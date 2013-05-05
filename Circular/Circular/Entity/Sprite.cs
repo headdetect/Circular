@@ -1,12 +1,46 @@
 ﻿using System;
 using Circular.Managers;
 using Circular.Utils;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Circular.Entity {
-
     public class Sprite : IComparable {
+        private SpriteEffects _spriteEffect = SpriteEffects.None;
+        private float _zoomScale = 1f; //Default zoom scale
+
+        /// <summary>
+        /// Initializes a new empty instance of the <see cref="Sprite"/> class.
+        /// </summary>
+        /// <param name="manager">The screen manager.</param>
+        protected Sprite ( ScreenManager manager ) {
+            Manager = manager;
+            Visible = true;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sprite"/> class.
+        /// </summary>
+        /// <param name="manager">The flux game.</param>
+        /// <param name="size">The size.</param>
+        public Sprite ( ScreenManager manager, Vector2 size ) {
+            Manager = manager;
+            Size = size;
+            Visible = true;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Sprite"/> class.
+        /// </summary>
+        /// <param name="manager">The flux game.</param>
+        /// <param name="size">The size.</param>
+        /// <param name="position">The position.</param>
+        public Sprite ( ScreenManager manager, Vector2 size, Vector2 position ) {
+            Manager = manager;
+            Size = size;
+            Position = position;
+            Visible = true;
+        }
 
         /// <summary>
         /// Gets the flux game.
@@ -61,9 +95,10 @@ namespace Circular.Entity {
         /// <value>
         /// The sprite effect.
         /// </value>
-        public SpriteEffects SpriteEffect { get { return _spriteEffect; } set { _spriteEffect = value; } }
-        private SpriteEffects _spriteEffect = SpriteEffects.None;
-
+        public SpriteEffects SpriteEffect {
+            get { return _spriteEffect; }
+            set { _spriteEffect = value; }
+        }
 
 
         /// <summary>
@@ -88,8 +123,10 @@ namespace Circular.Entity {
         /// <value>
         /// The zoom scale.
         /// </value>
-        public float ZoomScale { get { return _zoomScale; } set { _zoomScale = value; } }
-        private float _zoomScale = 1f; //Default zoom scale
+        public float ZoomScale {
+            get { return _zoomScale; }
+            set { _zoomScale = value; }
+        }
 
 
         /// <summary>
@@ -100,55 +137,29 @@ namespace Circular.Entity {
         /// </value>
         public bool Visible { get; set; }
 
-        /// <summary>
-        /// Initializes a new empty instance of the <see cref="Sprite"/> class.
-        /// </summary>
-        /// <param name="manager">The screen manager.</param>
-        protected Sprite ( ScreenManager manager ) {
-            this.Manager = manager;
-            this.Visible = true;
+        #region IComparable Members
+
+        public int CompareTo ( object obj ) {
+            var other = (Sprite) obj;
+            return other.ZIndex.CompareTo ( ZIndex );
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Sprite"/> class.
-        /// </summary>
-        /// <param name="manager">The flux game.</param>
-        /// <param name="size">The size.</param>
-        public Sprite ( ScreenManager manager, Vector2 size ) {
-            this.Manager = manager;
-            this.Size = size;
-            this.Visible = true;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Sprite"/> class.
-        /// </summary>
-        /// <param name="manager">The flux game.</param>
-        /// <param name="size">The size.</param>
-        /// <param name="position">The position.</param>
-        public Sprite ( ScreenManager manager, Vector2 size, Vector2 position ) {
-            this.Manager = manager;
-            this.Size = size;
-            this.Position = position;
-            this.Visible = true;
-        }
-
-
+        #endregion
 
         /// <summary>
         /// Draws this instance.
         /// </summary>
         public virtual void Draw ( GameTime gameTime ) {
-            if ( Visible )
-                Manager.SpriteBatch.Draw( Texture, Position, null, Color.White, Convert.ToSingle( Rotation * ( Math.PI / 180 ) ), Origin, ZoomScale, SpriteEffect, ZIndex );
+            if ( Visible ) {
+                Manager.SpriteBatch.Draw ( Texture, Position, null, Color.White, Convert.ToSingle ( Rotation * ( Math.PI / 180 ) ), Origin, ZoomScale, SpriteEffect, ZIndex );
+            }
         }
-
 
 
         /// <summary>
         /// Updates this instance.
         /// </summary>
-        public virtual void Update ( GameTime gameTime ) { }
+        public virtual void Update ( GameTime gameTime ) {}
 
         /// <summary>
         /// Inits this instance.
@@ -171,7 +182,7 @@ namespace Circular.Entity {
         ///   <c>true</c> if the points are in the bounds of the sprite; otherwise, <c>false</c>.
         /// </returns>
         public bool IsInBounds ( Vector2 point ) {
-            return IsInBounds( point.X, point.Y );
+            return IsInBounds ( point.X, point.Y );
         }
 
         /// <summary>
@@ -183,16 +194,10 @@ namespace Circular.Entity {
         ///   <c>true</c> if the points are in the bounds of the sprite; otherwise, <c>false</c>.
         /// </returns>
         public bool IsInBounds ( float x, float y ) {
-            Rectangle tangle = VectorUtils.VectorsToRectangle( Position, Size );
-            return !tangle.IsEmpty && tangle.Contains( (int) x, (int) y );
+            Rectangle tangle = VectorUtils.VectorsToRectangle ( Position, Size );
+            return !tangle.IsEmpty && tangle.Contains ( (int) x, (int) y );
         }
 
         #endregion
-
-        public int CompareTo ( object obj ) {
-            Sprite other = (Sprite) obj;
-            return other.ZIndex.CompareTo ( ZIndex );
-        }
     }
-
 }

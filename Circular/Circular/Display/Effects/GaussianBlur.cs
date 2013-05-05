@@ -23,7 +23,6 @@
 using System;
 using Circular.Helpers;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Circular.Display.Effects {
@@ -82,14 +81,34 @@ namespace Circular.Display.Effects {
     /// </para>
     /// </summary>
     public class GaussianBlur {
-        private Game game;
-        private Effect effect;
-        private int radius;
+        private readonly Effect effect;
+        private readonly Game game;
         private float amount;
-        private float sigma;
         private float[] kernel;
         private Vector2[] offsetsHoriz;
         private Vector2[] offsetsVert;
+        private int radius;
+        private float sigma;
+
+        /// <summary>
+        /// Default constructor for the GaussianBlur class. This constructor
+        /// should be called if you don't want the GaussianBlur class to use
+        /// its GaussianBlur.fx effect file to perform the two pass Gaussian
+        /// blur operation.
+        /// </summary>
+        public GaussianBlur () {}
+
+        /// <summary>
+        /// This overloaded constructor instructs the GaussianBlur class to
+        /// load and use its GaussianBlur.fx effect file that implements the
+        /// two pass Gaussian blur operation on the GPU. The effect file must
+        /// be already bound to the asset name: 'Effects\GaussianBlur' or
+        /// 'GaussianBlur'.
+        /// </summary>
+        public GaussianBlur ( Game game ) {
+            this.game = game;
+            effect = ContentHelper.GetEffect ( "GaussianBlur" );
+        }
 
         /// <summary>
         /// Returns the radius of the Gaussian blur filter kernel in pixels.
@@ -141,27 +160,6 @@ namespace Circular.Display.Effects {
         }
 
         /// <summary>
-        /// Default constructor for the GaussianBlur class. This constructor
-        /// should be called if you don't want the GaussianBlur class to use
-        /// its GaussianBlur.fx effect file to perform the two pass Gaussian
-        /// blur operation.
-        /// </summary>
-        public GaussianBlur () {
-        }
-
-        /// <summary>
-        /// This overloaded constructor instructs the GaussianBlur class to
-        /// load and use its GaussianBlur.fx effect file that implements the
-        /// two pass Gaussian blur operation on the GPU. The effect file must
-        /// be already bound to the asset name: 'Effects\GaussianBlur' or
-        /// 'GaussianBlur'.
-        /// </summary>
-        public GaussianBlur ( Game game ) {
-            this.game = game;
-            effect = ContentHelper.GetEffect( "GaussianBlur" );
-        }
-
-        /// <summary>
         /// Calculates the Gaussian blur filter kernel. This implementation is
         /// ported from the original Java code appearing in chapter 16 of
         /// "Filthy Rich Clients: Developing Animated and Graphical Effects for
@@ -174,22 +172,23 @@ namespace Circular.Display.Effects {
             amount = blurAmount;
 
             kernel = null;
-            kernel = new float[ radius * 2 + 1 ];
+            kernel = new float[radius * 2 + 1];
             sigma = radius / amount;
 
             float twoSigmaSquare = 2.0f * sigma * sigma;
-            float sigmaRoot = (float) Math.Sqrt( twoSigmaSquare * Math.PI );
+            var sigmaRoot = (float) Math.Sqrt ( twoSigmaSquare * Math.PI );
             float total = 0.0f;
 
             for ( int i = -radius; i <= radius; ++i ) {
                 float distance = i * i;
                 int index = i + radius;
-                kernel[ index ] = (float) Math.Exp( -distance / twoSigmaSquare ) / sigmaRoot;
-                total += kernel[ index ];
+                kernel [index] = (float) Math.Exp ( -distance / twoSigmaSquare ) / sigmaRoot;
+                total += kernel [index];
             }
 
-            for ( int i = 0; i < kernel.Length; ++i )
-                kernel[ i ] /= total;
+            for ( int i = 0; i < kernel.Length; ++i ) {
+                kernel [i] /= total;
+            }
         }
 
         /// <summary>
@@ -205,10 +204,10 @@ namespace Circular.Display.Effects {
         /// <param name="textureHeight">The texture height in pixels.</param>
         public void ComputeOffsets ( float textureWidth, float textureHeight ) {
             offsetsHoriz = null;
-            offsetsHoriz = new Vector2[ radius * 2 + 1 ];
+            offsetsHoriz = new Vector2[radius * 2 + 1];
 
             offsetsVert = null;
-            offsetsVert = new Vector2[ radius * 2 + 1 ];
+            offsetsVert = new Vector2[radius * 2 + 1];
 
             int index = 0;
             float xOffset = 1.0f / textureWidth;
@@ -216,8 +215,8 @@ namespace Circular.Display.Effects {
 
             for ( int i = -radius; i <= radius; ++i ) {
                 index = i + radius;
-                offsetsHoriz[ index ] = new Vector2( i * xOffset, 0.0f );
-                offsetsVert[ index ] = new Vector2( 0.0f, i * yOffset );
+                offsetsHoriz [index] = new Vector2 ( i * xOffset, 0.0f );
+                offsetsVert [index] = new Vector2 ( 0.0f, i * yOffset );
             }
         }
 
@@ -235,46 +234,47 @@ namespace Circular.Display.Effects {
         /// <param name="spriteBatch">Used to draw quads for the blur passes.</param>
         /// <returns>The resulting Gaussian blurred image.</returns>
         public Texture2D PerformGaussianBlur ( Texture2D srcTexture,
-                                             RenderTarget2D renderTarget1,
-                                             RenderTarget2D renderTarget2,
-                                             SpriteBatch spriteBatch ) {
-            if ( effect == null )
-                throw new InvalidOperationException( "GaussianBlur.fx effect not loaded." );
+                                               RenderTarget2D renderTarget1,
+                                               RenderTarget2D renderTarget2,
+                                               SpriteBatch spriteBatch ) {
+            if ( effect == null ) {
+                throw new InvalidOperationException ( "GaussianBlur.fx effect not loaded." );
+            }
 
             Texture2D outputTexture = null;
-            Rectangle srcRect = new Rectangle( 0, 0, srcTexture.Width, srcTexture.Height );
-            Rectangle destRect1 = new Rectangle( 0, 0, renderTarget1.Width, renderTarget1.Height );
-            Rectangle destRect2 = new Rectangle( 0, 0, renderTarget2.Width, renderTarget2.Height );
+            var srcRect = new Rectangle ( 0, 0, srcTexture.Width, srcTexture.Height );
+            var destRect1 = new Rectangle ( 0, 0, renderTarget1.Width, renderTarget1.Height );
+            var destRect2 = new Rectangle ( 0, 0, renderTarget2.Width, renderTarget2.Height );
 
             // Perform horizontal Gaussian blur.
 
-            game.GraphicsDevice.SetRenderTarget( renderTarget1 );
+            game.GraphicsDevice.SetRenderTarget ( renderTarget1 );
 
-            effect.CurrentTechnique = effect.Techniques[ "GaussianBlur" ];
-            effect.Parameters[ "weights" ].SetValue( kernel );
-            effect.Parameters[ "colorMapTexture" ].SetValue( srcTexture );
-            effect.Parameters[ "offsets" ].SetValue( offsetsHoriz );
+            effect.CurrentTechnique = effect.Techniques ["GaussianBlur"];
+            effect.Parameters ["weights"].SetValue ( kernel );
+            effect.Parameters ["colorMapTexture"].SetValue ( srcTexture );
+            effect.Parameters ["offsets"].SetValue ( offsetsHoriz );
 
-            spriteBatch.Begin( 0, BlendState.Opaque, null, null, null, effect );
-            spriteBatch.Draw( srcTexture, destRect1, Color.White );
-            spriteBatch.End();
+            spriteBatch.Begin ( 0, BlendState.Opaque, null, null, null, effect );
+            spriteBatch.Draw ( srcTexture, destRect1, Color.White );
+            spriteBatch.End ();
 
             // Perform vertical Gaussian blur.
 
-            game.GraphicsDevice.SetRenderTarget( renderTarget2 );
-            outputTexture = (Texture2D) renderTarget1;
+            game.GraphicsDevice.SetRenderTarget ( renderTarget2 );
+            outputTexture = renderTarget1;
 
-            effect.Parameters[ "colorMapTexture" ].SetValue( outputTexture );
-            effect.Parameters[ "offsets" ].SetValue( offsetsVert );
+            effect.Parameters ["colorMapTexture"].SetValue ( outputTexture );
+            effect.Parameters ["offsets"].SetValue ( offsetsVert );
 
-            spriteBatch.Begin( 0, BlendState.Opaque, null, null, null, effect );
-            spriteBatch.Draw( outputTexture, destRect2, Color.White );
-            spriteBatch.End();
+            spriteBatch.Begin ( 0, BlendState.Opaque, null, null, null, effect );
+            spriteBatch.Draw ( outputTexture, destRect2, Color.White );
+            spriteBatch.End ();
 
             // Return the Gaussian blurred texture.
 
-            game.GraphicsDevice.SetRenderTarget( null );
-            outputTexture = (Texture2D) renderTarget2;
+            game.GraphicsDevice.SetRenderTarget ( null );
+            outputTexture = renderTarget2;
 
             return outputTexture;
         }

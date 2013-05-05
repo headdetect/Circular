@@ -17,11 +17,15 @@ namespace Circular.Display.Screens {
     /// when the menu entry is selected.
     /// </summary>
     public sealed class MenuEntry {
+        private readonly MenuScreen _menu;
+        private readonly GameScreen _screen;
+        private readonly EntryType _type;
+        public bool IsHovered;
+        public bool IsSelected;
         private float _alpha;
         private Vector2 _baseOrigin;
 
         private float _height;
-        private MenuScreen _menu;
 
         /// <summary>
         /// The position at which the entry is drawn. This is set by the MenuScreen
@@ -30,7 +34,6 @@ namespace Circular.Display.Screens {
         private Vector2 _position;
 
         private float _scale;
-        private GameScreen _screen;
 
         /// <summary>
         /// Tracks a fading selection effect on the entry.
@@ -45,13 +48,7 @@ namespace Circular.Display.Screens {
         /// </summary>
         private string _text;
 
-        private EntryType _type;
         private float _width;
-
-        public bool IsSelected, IsHovered;
-
-
-        public Texture2D Preview { get; set; }
 
         /// <summary>
         /// Constructs a new menu entry with the specified text.
@@ -70,8 +67,9 @@ namespace Circular.Display.Screens {
         /// Constructs a new menu entry with the specified text.
         /// </summary>
         public MenuEntry ( MenuScreen menu, string text, EntryType type, GameScreen screen )
-            : this( menu, text, type, screen, null ) {
-        }
+            : this ( menu, text, type, screen, null ) {}
+
+        public Texture2D Preview { get; set; }
 
 
         /// <summary>
@@ -100,12 +98,12 @@ namespace Circular.Display.Screens {
         }
 
         public void Initialize () {
-            SpriteFont font = ContentHelper.GetFont( "menufont" );
+            SpriteFont font = ContentHelper.GetFont ( "menufont" );
 
-            _baseOrigin = new Vector2( font.MeasureString( Text ).X, font.MeasureString( "|" ).Y ) * 0.5f;
+            _baseOrigin = new Vector2 ( font.MeasureString ( Text ).X, font.MeasureString ( "|" ).Y ) * 0.5f;
 
-            _width = font.MeasureString( Text ).X * 0.8f;
-            _height = font.MeasureString( "|" ).Y * 0.8f;
+            _width = font.MeasureString ( Text ).X * 0.8f;
+            _height = font.MeasureString ( "|" ).Y * 0.8f;
         }
 
         public bool IsExitItem () {
@@ -115,18 +113,17 @@ namespace Circular.Display.Screens {
         public bool IsSelectable () {
             return _type != EntryType.Separator;
         }
-        
+
         /// <summary>
         /// Updates the menu entry.
         /// </summary>
         public void Update ( GameTime gameTime ) {
-
             // When the menu selection changes, entries gradually fade between
             // their selected and deselected appearance, rather than instantly
             // popping to the new state.
             if ( _type != EntryType.Separator ) {
                 float fadeSpeed = (float) gameTime.ElapsedGameTime.TotalSeconds * 4;
-                _selectionFade = IsSelected || IsHovered ? Math.Min( _selectionFade + fadeSpeed, 1f ) : Math.Max( _selectionFade - fadeSpeed, 0f );
+                _selectionFade = IsSelected || IsHovered ? Math.Min ( _selectionFade + fadeSpeed, 1f ) : Math.Max ( _selectionFade - fadeSpeed, 0f );
                 _scale = 0.7f + 0.1f * _selectionFade;
             }
         }
@@ -135,17 +132,17 @@ namespace Circular.Display.Screens {
         /// Draws the menu entry. This can be overridden to customize the appearance.
         /// </summary>
         public void Draw () {
-            SpriteFont font = ContentHelper.GetFont( "menufont" );
+            SpriteFont font = ContentHelper.GetFont ( "menufont" );
             SpriteBatch batch = _menu.ScreenManager.SpriteBatch;
 
-            Color color = _type == EntryType.Separator ? Color.DarkOrange : Color.Lerp( Color.White, new Color( 255, 210, 0 ), _selectionFade );
+            Color color = _type == EntryType.Separator ? Color.DarkOrange : Color.Lerp ( Color.White, new Color ( 255, 210, 0 ), _selectionFade );
             color *= _alpha;
 
             // Draw text, centered on the middle of each line.
-            batch.DrawString( font, _text, _position - _baseOrigin * _scale + Vector2.One,
-                              Color.DarkSlateGray * _alpha * _alpha, 0, Vector2.Zero, _scale, SpriteEffects.None, 0 );
-            batch.DrawString( font, _text, _position - _baseOrigin * _scale, color, 0, Vector2.Zero, _scale,
-                              SpriteEffects.None, 0 );
+            batch.DrawString ( font, _text, _position - _baseOrigin * _scale + Vector2.One,
+                               Color.DarkSlateGray * _alpha * _alpha, 0, Vector2.Zero, _scale, SpriteEffects.None, 0 );
+            batch.DrawString ( font, _text, _position - _baseOrigin * _scale, color, 0, Vector2.Zero, _scale,
+                               SpriteEffects.None, 0 );
         }
 
         /// <summary>

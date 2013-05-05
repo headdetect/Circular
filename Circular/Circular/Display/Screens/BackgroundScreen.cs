@@ -22,23 +22,23 @@ namespace Circular.Display.Screens {
         /// Constructor.
         /// </summary>
         public BackgroundScreen () {
-            TransitionOnTime = TimeSpan.FromSeconds( 0.5 );
-            TransitionOffTime = TimeSpan.FromSeconds( 0.5 );
+            TransitionOnTime = TimeSpan.FromSeconds ( 0.5 );
+            TransitionOffTime = TimeSpan.FromSeconds ( 0.5 );
         }
 
         public override void LoadContent () {
-            _backgroundTexture = ContentHelper.GetTexture( "gradient" );
+            _backgroundTexture = ContentHelper.GetTexture ( "gradient" );
 
             Viewport viewport = ScreenManager.GraphicsDevice.Viewport;
-            Vector2 logoSize = new Vector2();
+            var logoSize = new Vector2 ();
             logoSize.Y = viewport.Height * LogoScreenHeightRatio;
             logoSize.X = logoSize.Y * LogoWidthHeightRatio;
 
             float border = viewport.Height * LogoScreenBorderRatio;
-            Vector2 logoPosition = new Vector2( viewport.Width - border - logoSize.X,
-                                               viewport.Height - border - logoSize.Y );
-            _logoDestination = new Rectangle( (int) logoPosition.X, (int) logoPosition.Y, (int) logoSize.X,
-                                             (int) logoSize.Y );
+            var logoPosition = new Vector2 ( viewport.Width - border - logoSize.X,
+                                             viewport.Height - border - logoSize.Y );
+            _logoDestination = new Rectangle ( (int) logoPosition.X, (int) logoPosition.Y, (int) logoSize.X,
+                                               (int) logoSize.Y );
             _viewport = viewport.Bounds;
         }
 
@@ -50,17 +50,17 @@ namespace Circular.Display.Screens {
         /// Update method wanting to transition off.
         /// </summary>
         public override void Update ( GameTime gameTime, bool otherScreenHasFocus,
-                                    bool coveredByOtherScreen ) {
-            base.Update( gameTime, otherScreenHasFocus, false );
+                                      bool coveredByOtherScreen ) {
+            base.Update ( gameTime, otherScreenHasFocus, false );
         }
 
         /// <summary>
         /// Draws the background screen.
         /// </summary>
         public override void Draw ( GameTime gameTime ) {
-            ScreenManager.SpriteBatch.Begin();
-            ScreenManager.SpriteBatch.Draw( _backgroundTexture, _viewport, Color.White );
-            ScreenManager.SpriteBatch.End();
+            ScreenManager.SpriteBatch.Begin ();
+            ScreenManager.SpriteBatch.Draw ( _backgroundTexture, _viewport, Color.White );
+            ScreenManager.SpriteBatch.End ();
         }
     }
 }

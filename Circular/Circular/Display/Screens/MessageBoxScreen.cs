@@ -4,28 +4,25 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Circular.Display.Screens
-{
+namespace Circular.Display.Screens {
     /// <summary>
     /// A popup message box screen, used to display "are you sure?"
     /// confirmation messages.
     /// </summary>
-    public class MessageBoxScreen : GameScreen
-    {
+    public class MessageBoxScreen : GameScreen {
+        private readonly string _message;
         private Rectangle _backgroundRectangle;
         private Texture2D _gradientTexture;
-        private string _message;
         private Vector2 _textPosition;
 
-        public MessageBoxScreen(string message)
-        {
+        public MessageBoxScreen ( string message ) {
             _message = message;
 
             IsPopup = true;
             HasCursor = true;
 
-            TransitionOnTime = TimeSpan.FromSeconds(0.4);
-            TransitionOffTime = TimeSpan.FromSeconds(0.4);
+            TransitionOnTime = TimeSpan.FromSeconds ( 0.4 );
+            TransitionOffTime = TimeSpan.FromSeconds ( 0.4 );
         }
 
         /// <summary>
@@ -34,60 +31,57 @@ namespace Circular.Display.Screens
         /// Whenever a subsequent MessageBoxScreen tries to load this same content,
         /// it will just get back another reference to the already loaded data.
         /// </summary>
-        public override void LoadContent() {
+        public override void LoadContent () {
             SpriteFont font = ContentHelper.GetFont ( "fpsfont" );
             ContentManager content = ScreenManager.Game.Content;
-            _gradientTexture = ContentHelper.GetTexture( "popup" );
+            _gradientTexture = ContentHelper.GetTexture ( "popup" );
 
             // Center the message text in the viewport.
             Viewport viewport = ScreenManager.GraphicsDevice.Viewport;
-            Vector2 viewportSize = new Vector2(viewport.Width, viewport.Height);
-            Vector2 textSize = font.MeasureString(_message);
-            _textPosition = (viewportSize - textSize) / 2;
+            var viewportSize = new Vector2 ( viewport.Width, viewport.Height );
+            Vector2 textSize = font.MeasureString ( _message );
+            _textPosition = ( viewportSize - textSize ) / 2;
 
             // The background includes a border somewhat larger than the text itself.
             const int hPad = 32;
             const int vPad = 16;
 
-            _backgroundRectangle = new Rectangle((int)_textPosition.X - hPad,
-                                                 (int)_textPosition.Y - vPad,
-                                                 (int)textSize.X + hPad * 2,
-                                                 (int)textSize.Y + vPad * 2);
+            _backgroundRectangle = new Rectangle ( (int) _textPosition.X - hPad,
+                                                   (int) _textPosition.Y - vPad,
+                                                   (int) textSize.X + hPad * 2,
+                                                   (int) textSize.Y + vPad * 2 );
         }
 
         /// <summary>
         /// Responds to user input, accepting or cancelling the message box.
         /// </summary>
-        public override void HandleInput(InputHelper input, GameTime gameTime)
-        {
-            if (input.IsMenuSelect() || input.IsMenuCancel() ||
-                input.IsNewMouseButtonPress(MouseButtons.LeftButton))
-            {
-                ExitScreen();
+        public override void HandleInput ( InputHelper input, GameTime gameTime ) {
+            if ( input.IsMenuSelect () || input.IsMenuCancel () ||
+                 input.IsNewMouseButtonPress ( MouseButtons.LeftButton ) ) {
+                ExitScreen ();
             }
         }
 
         /// <summary>
         /// Draws the message box.
         /// </summary>
-        public override void Draw(GameTime gameTime)
-        {
+        public override void Draw ( GameTime gameTime ) {
             SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
-            SpriteFont font = ContentHelper.GetFont( "fpsfont" );
+            SpriteFont font = ContentHelper.GetFont ( "fpsfont" );
 
             // Fade the popup alpha during transitions.
-            Color color = Color.White * TransitionAlpha * (2f / 3f);
+            Color color = Color.White * TransitionAlpha * ( 2f / 3f );
 
-            spriteBatch.Begin();
+            spriteBatch.Begin ();
 
             // Draw the background rectangle.
-            spriteBatch.Draw(_gradientTexture, _backgroundRectangle, color);
+            spriteBatch.Draw ( _gradientTexture, _backgroundRectangle, color );
 
             // Draw the message box text.
-            spriteBatch.DrawString(font, _message, _textPosition + Vector2.One, Color.Black);
-            spriteBatch.DrawString(font, _message, _textPosition, Color.White);
+            spriteBatch.DrawString ( font, _message, _textPosition + Vector2.One, Color.Black );
+            spriteBatch.DrawString ( font, _message, _textPosition, Color.White );
 
-            spriteBatch.End();
+            spriteBatch.End ();
         }
     }
 }

@@ -1,32 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Microsoft.Xna.Framework;
-using Circular.Managers;
 
 namespace Circular.Display {
     public class HUD : DrawableGameComponent {
+        /// <summary>
+        /// Height of the viewport
+        /// </summary>
+        public readonly int Height;
 
         /// <summary>
         /// Width of the viewport
         /// </summary>
         public readonly int Width;
 
-        /// <summary>
-        /// Height of the viewport
-        /// </summary>
-        public readonly int Height;
-
-
-        /// <summary>
-        /// Gets or sets the HUD objects, limited to 25 elements.
-        /// </summary>
-        /// <value>
-        /// The HUD objects.
-        /// </value>
-        public List<IHUDComponent> HUDObjects { get; set; }
 
         private CircularGame fluxGame;
 
@@ -37,48 +24,51 @@ namespace Circular.Display {
         /// <param name="game">The game.</param>
         public HUD ( CircularGame game )
             : base ( game ) {
-
             fluxGame = game;
 
-            HUDObjects = new List<IHUDComponent> ();
+            HUDObjects = new List < IHUDComponent > ();
 
             Height = game.GraphicsDevice.Viewport.Height;
             Width = game.GraphicsDevice.Viewport.Width;
         }
 
-        public override void Initialize () {
+        /// <summary>
+        /// Gets or sets the HUD objects, limited to 25 elements.
+        /// </summary>
+        /// <value>
+        /// The HUD objects.
+        /// </value>
+        public List < IHUDComponent > HUDObjects { get; set; }
 
+        public override void Initialize () {
             for ( int i = 0; i < HUDObjects.Count; i++ ) {
-                HUDObjects[ i ].Init ();
+                HUDObjects [i].Init ();
             }
 
             base.Initialize ();
         }
-        public override void Update ( GameTime gameTime ) {
 
+        public override void Update ( GameTime gameTime ) {
             for ( int i = 0; i < HUDObjects.Count; i++ ) {
-                HUDObjects[ i ].Update ( gameTime );
+                HUDObjects [i].Update ( gameTime );
             }
 
             base.Update ( gameTime );
         }
 
         public override void Draw ( GameTime gameTime ) {
-
-            foreach ( var sprite in HUDObjects.OrderBy ( x => x.ZIndex ) ) {
+            foreach ( IHUDComponent sprite in HUDObjects.OrderBy ( x => x.ZIndex ) ) {
                 sprite.Draw ( gameTime );
             }
 
             base.Draw ( gameTime );
         }
-
     }
 
     /// <summary>
     /// Interface for drawing stuff only to be included in the HUD
     /// </summary>
     public abstract class IHUDComponent {
-
         /// <summary>
         /// Gets or sets the index of the Z.
         /// </summary>
@@ -103,5 +93,4 @@ namespace Circular.Display {
         /// </summary>
         public abstract void Draw ( GameTime gameTime );
     }
-
 }

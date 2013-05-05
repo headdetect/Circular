@@ -9,6 +9,8 @@ namespace Circular.Display {
         private const float _minZoom = 0.02f;
         private const float _maxZoom = 20f;
         private static GraphicsDevice _graphics;
+        private readonly Matrix _projection;
+        private readonly Vector2 _translateCenter;
 
         private Matrix _batchView;
 
@@ -22,12 +24,10 @@ namespace Circular.Display {
         private Vector2 _minPosition;
         private float _minRotation;
         private bool _positionTracking;
-        private Matrix _projection;
         private bool _rotationTracking;
         private Vector2 _targetPosition;
         private float _targetRotation;
         private Body _trackingBody;
-        private Vector2 _translateCenter;
         private Matrix _view;
 
         /// <summary>
@@ -36,16 +36,16 @@ namespace Circular.Display {
         /// <param name="graphics"></param>
         public Camera ( GraphicsDevice graphics ) {
             _graphics = graphics;
-            _projection = Matrix.CreateOrthographicOffCenter( 0f, ConvertUnits.ToSimUnits( _graphics.Viewport.Width ),
-                                                             ConvertUnits.ToSimUnits( _graphics.Viewport.Height ), 0f, 0f,
-                                                             1f );
+            _projection = Matrix.CreateOrthographicOffCenter ( 0f, ConvertUnits.ToSimUnits ( _graphics.Viewport.Width ),
+                                                               ConvertUnits.ToSimUnits ( _graphics.Viewport.Height ), 0f, 0f,
+                                                               1f );
             _view = Matrix.Identity;
             _batchView = Matrix.Identity;
 
-            _translateCenter = new Vector2( ConvertUnits.ToSimUnits( _graphics.Viewport.Width / 2f ),
-                                           ConvertUnits.ToSimUnits( _graphics.Viewport.Height / 2f ) );
+            _translateCenter = new Vector2 ( ConvertUnits.ToSimUnits ( _graphics.Viewport.Width / 2f ),
+                                             ConvertUnits.ToSimUnits ( _graphics.Viewport.Height / 2f ) );
 
-            ResetCamera();
+            ResetCamera ();
         }
 
         public Matrix View {
@@ -64,11 +64,11 @@ namespace Circular.Display {
         /// The current position of the camera.
         /// </summary>
         public Vector2 Position {
-            get { return ConvertUnits.ToDisplayUnits( _currentPosition ); }
+            get { return ConvertUnits.ToDisplayUnits ( _currentPosition ); }
             set {
-                _targetPosition = ConvertUnits.ToSimUnits( value );
+                _targetPosition = ConvertUnits.ToSimUnits ( value );
                 if ( _minPosition != _maxPosition ) {
-                    Vector2.Clamp( ref _targetPosition, ref _minPosition, ref _maxPosition, out _targetPosition );
+                    Vector2.Clamp ( ref _targetPosition, ref _minPosition, ref _maxPosition, out _targetPosition );
                 }
             }
         }
@@ -79,8 +79,8 @@ namespace Circular.Display {
         /// applied (unless you override that function).
         /// </summary>
         public Vector2 MinPosition {
-            get { return ConvertUnits.ToDisplayUnits( _minPosition ); }
-            set { _minPosition = ConvertUnits.ToSimUnits( value ); }
+            get { return ConvertUnits.ToDisplayUnits ( _minPosition ); }
+            set { _minPosition = ConvertUnits.ToSimUnits ( value ); }
         }
 
         /// <summary>
@@ -89,8 +89,8 @@ namespace Circular.Display {
         /// applied (unless you override that function).
         /// </summary>
         public Vector2 MaxPosition {
-            get { return ConvertUnits.ToDisplayUnits( _maxPosition ); }
-            set { _maxPosition = ConvertUnits.ToSimUnits( value ); }
+            get { return ConvertUnits.ToDisplayUnits ( _maxPosition ); }
+            set { _maxPosition = ConvertUnits.ToSimUnits ( value ); }
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Circular.Display {
             set {
                 _targetRotation = value % MathHelper.TwoPi;
                 if ( _minRotation != _maxRotation ) {
-                    _targetRotation = MathHelper.Clamp( _targetRotation, _minRotation, _maxRotation );
+                    _targetRotation = MathHelper.Clamp ( _targetRotation, _minRotation, _maxRotation );
                 }
             }
         }
@@ -112,7 +112,7 @@ namespace Circular.Display {
         /// <value>The min rotation.</value>
         public float MinRotation {
             get { return _minRotation; }
-            set { _minRotation = MathHelper.Clamp( value, -MathHelper.Pi, 0f ); }
+            set { _minRotation = MathHelper.Clamp ( value, -MathHelper.Pi, 0f ); }
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Circular.Display {
         /// <value>The max rotation.</value>
         public float MaxRotation {
             get { return _maxRotation; }
-            set { _maxRotation = MathHelper.Clamp( value, 0f, MathHelper.Pi ); }
+            set { _maxRotation = MathHelper.Clamp ( value, 0f, MathHelper.Pi ); }
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace Circular.Display {
             get { return _currentZoom; }
             set {
                 _currentZoom = value;
-                _currentZoom = MathHelper.Clamp( _currentZoom, _minZoom, _maxZoom );
+                _currentZoom = MathHelper.Clamp ( _currentZoom, _minZoom, _maxZoom );
             }
         }
 
@@ -183,7 +183,7 @@ namespace Circular.Display {
         public void MoveCamera ( Vector2 amount ) {
             _currentPosition += amount;
             if ( _minPosition != _maxPosition ) {
-                Vector2.Clamp( ref _currentPosition, ref _minPosition, ref _maxPosition, out _currentPosition );
+                Vector2.Clamp ( ref _currentPosition, ref _minPosition, ref _maxPosition, out _currentPosition );
             }
             _targetPosition = _currentPosition;
             _positionTracking = false;
@@ -193,7 +193,7 @@ namespace Circular.Display {
         public void RotateCamera ( float amount ) {
             _currentRotation += amount;
             if ( _minRotation != _maxRotation ) {
-                _currentRotation = MathHelper.Clamp( _currentRotation, _minRotation, _maxRotation );
+                _currentRotation = MathHelper.Clamp ( _currentRotation, _minRotation, _maxRotation );
             }
             _targetRotation = _currentRotation;
             _positionTracking = false;
@@ -219,34 +219,34 @@ namespace Circular.Display {
 
             _currentZoom = 1f;
 
-            SetView();
+            SetView ();
         }
 
         public void Jump2Target () {
             _currentPosition = _targetPosition;
             _currentRotation = _targetRotation;
 
-            SetView();
+            SetView ();
         }
 
         private void SetView () {
-            Matrix matRotation = Matrix.CreateRotationZ( _currentRotation );
-            Matrix matZoom = Matrix.CreateScale( _currentZoom );
-            Vector3 translateCenter = new Vector3( _translateCenter, 0f );
-            Vector3 translateBody = new Vector3( -_currentPosition, 0f );
+            Matrix matRotation = Matrix.CreateRotationZ ( _currentRotation );
+            Matrix matZoom = Matrix.CreateScale ( _currentZoom );
+            var translateCenter = new Vector3 ( _translateCenter, 0f );
+            var translateBody = new Vector3 ( -_currentPosition, 0f );
 
-            _view = Matrix.CreateTranslation( translateBody ) *
+            _view = Matrix.CreateTranslation ( translateBody ) *
                     matRotation *
                     matZoom *
-                    Matrix.CreateTranslation( translateCenter );
+                    Matrix.CreateTranslation ( translateCenter );
 
-            translateCenter = ConvertUnits.ToDisplayUnits( translateCenter );
-            translateBody = ConvertUnits.ToDisplayUnits( translateBody );
+            translateCenter = ConvertUnits.ToDisplayUnits ( translateCenter );
+            translateBody = ConvertUnits.ToDisplayUnits ( translateBody );
 
-            _batchView = Matrix.CreateTranslation( translateBody ) *
+            _batchView = Matrix.CreateTranslation ( translateBody ) *
                          matRotation *
                          matZoom *
-                         Matrix.CreateTranslation( translateCenter );
+                         Matrix.CreateTranslation ( translateCenter );
         }
 
         /// <summary>
@@ -257,24 +257,24 @@ namespace Circular.Display {
                 if ( _positionTracking ) {
                     _targetPosition = _trackingBody.Position;
                     if ( _minPosition != _maxPosition ) {
-                        Vector2.Clamp( ref _targetPosition, ref _minPosition, ref _maxPosition, out _targetPosition );
+                        Vector2.Clamp ( ref _targetPosition, ref _minPosition, ref _maxPosition, out _targetPosition );
                     }
                 }
                 if ( _rotationTracking ) {
                     _targetRotation = -_trackingBody.Rotation % MathHelper.TwoPi;
                     if ( _minRotation != _maxRotation ) {
-                        _targetRotation = MathHelper.Clamp( _targetRotation, _minRotation, _maxRotation );
+                        _targetRotation = MathHelper.Clamp ( _targetRotation, _minRotation, _maxRotation );
                     }
                 }
             }
             Vector2 delta = _targetPosition - _currentPosition;
-            float distance = delta.Length();
+            float distance = delta.Length ();
             if ( distance > 0f ) {
                 delta /= distance;
             }
             float inertia;
             if ( distance < 10f ) {
-                inertia = (float) Math.Pow( distance / 10.0, 2.0 );
+                inertia = (float) Math.Pow ( distance / 10.0, 2.0 );
             }
             else {
                 inertia = 1f;
@@ -283,36 +283,36 @@ namespace Circular.Display {
             float rotDelta = _targetRotation - _currentRotation;
 
             float rotInertia;
-            if ( Math.Abs( rotDelta ) < 5f ) {
-                rotInertia = (float) Math.Pow( rotDelta / 5.0, 2.0 );
+            if ( Math.Abs ( rotDelta ) < 5f ) {
+                rotInertia = (float) Math.Pow ( rotDelta / 5.0, 2.0 );
             }
             else {
                 rotInertia = 1f;
             }
-            if ( Math.Abs( rotDelta ) > 0f ) {
-                rotDelta /= Math.Abs( rotDelta );
+            if ( Math.Abs ( rotDelta ) > 0f ) {
+                rotDelta /= Math.Abs ( rotDelta );
             }
 
             _currentPosition += 100f * delta * inertia * (float) gameTime.ElapsedGameTime.TotalSeconds;
             _currentRotation += 80f * rotDelta * rotInertia * (float) gameTime.ElapsedGameTime.TotalSeconds;
 
-            SetView();
+            SetView ();
         }
 
         public Vector2 ConvertScreenToWorld ( Vector2 location ) {
-            Vector3 t = new Vector3( location, 0 );
+            var t = new Vector3 ( location, 0 );
 
-            t = _graphics.Viewport.Unproject( t, _projection, _view, Matrix.Identity );
+            t = _graphics.Viewport.Unproject ( t, _projection, _view, Matrix.Identity );
 
-            return new Vector2( t.X, t.Y );
+            return new Vector2 ( t.X, t.Y );
         }
 
         public Vector2 ConvertWorldToScreen ( Vector2 location ) {
-            Vector3 t = new Vector3( location, 0 );
+            var t = new Vector3 ( location, 0 );
 
-            t = _graphics.Viewport.Project( t, _projection, _view, Matrix.Identity );
+            t = _graphics.Viewport.Project ( t, _projection, _view, Matrix.Identity );
 
-            return new Vector2( t.X, t.Y );
+            return new Vector2 ( t.X, t.Y );
         }
     }
 }

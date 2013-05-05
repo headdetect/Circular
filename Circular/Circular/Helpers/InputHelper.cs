@@ -19,7 +19,7 @@ namespace Circular.Helpers {
     }
 
     public class InputHelper {
-        private readonly List<GestureSample> _gestures = new List<GestureSample>();
+        private readonly List < GestureSample > _gestures = new List < GestureSample > ();
         private GamePadState _currentGamePadState;
         private KeyboardState _currentKeyboardState;
         private MouseState _currentMouseState;
@@ -35,7 +35,7 @@ namespace Circular.Helpers {
         private bool _cursorIsValid;
         private bool _cursorIsVisible;
         private bool _cursorMoved;
-        private Entity.EntityCursor _cursorSprite;
+        private EntityCursor _cursorSprite;
 
 #if WINDOWS_PHONE
         private VirtualStick _phoneStick;
@@ -43,22 +43,22 @@ namespace Circular.Helpers {
         private VirtualButton _phoneB;
 #endif
 
-        private ScreenManager _manager;
+        private readonly ScreenManager _manager;
         private Viewport _viewport;
 
         /// <summary>
         ///   Constructs a new input state.
         /// </summary>
         public InputHelper ( ScreenManager manager ) {
-            _currentKeyboardState = new KeyboardState();
-            _currentGamePadState = new GamePadState();
-            _currentMouseState = new MouseState();
-            _currentVirtualState = new GamePadState();
+            _currentKeyboardState = new KeyboardState ();
+            _currentGamePadState = new GamePadState ();
+            _currentMouseState = new MouseState ();
+            _currentVirtualState = new GamePadState ();
 
-            _lastKeyboardState = new KeyboardState();
-            _lastGamePadState = new GamePadState();
-            _lastMouseState = new MouseState();
-            _lastVirtualState = new GamePadState();
+            _lastKeyboardState = new KeyboardState ();
+            _lastGamePadState = new GamePadState ();
+            _lastMouseState = new MouseState ();
+            _lastVirtualState = new GamePadState ();
 
             _manager = manager;
 
@@ -129,8 +129,8 @@ namespace Circular.Helpers {
         }
 
         public void LoadContent () {
-            _cursorSprite = new EntityCursor( _manager );
-            _cursorSprite.Init();
+            _cursorSprite = new EntityCursor ( _manager );
+            _cursorSprite.Init ();
             _viewport = _manager.GraphicsDevice.Viewport;
         }
 
@@ -145,38 +145,38 @@ namespace Circular.Helpers {
                 _lastVirtualState = _currentVirtualState;
             }
 
-            _currentKeyboardState = Keyboard.GetState();
-            _currentGamePadState = GamePad.GetState( PlayerIndex.One );
-            _currentMouseState = Mouse.GetState();
+            _currentKeyboardState = Keyboard.GetState ();
+            _currentGamePadState = GamePad.GetState ( PlayerIndex.One );
+            _currentMouseState = Mouse.GetState ();
 
             if ( _handleVirtualStick ) {
 #if XBOX
             _currentVirtualState= GamePad.GetState(PlayerIndex.One);
 #elif WINDOWS
-                _currentVirtualState = GamePad.GetState( PlayerIndex.One ).IsConnected ? GamePad.GetState( PlayerIndex.One ) : HandleVirtualStickWin();
+                _currentVirtualState = GamePad.GetState ( PlayerIndex.One ).IsConnected ? GamePad.GetState ( PlayerIndex.One ) : HandleVirtualStickWin ();
 #elif WINDOWS_PHONE
                 _currentVirtualState = HandleVirtualStickWP7();
 #endif
             }
 
-            _gestures.Clear();
+            _gestures.Clear ();
             while ( TouchPanel.IsGestureAvailable ) {
-                _gestures.Add( TouchPanel.ReadGesture() );
+                _gestures.Add ( TouchPanel.ReadGesture () );
             }
 
             // Update cursor
             Vector2 oldCursor = _cursor;
             if ( _currentGamePadState.IsConnected && _currentGamePadState.ThumbSticks.Left != Vector2.Zero ) {
                 Vector2 temp = _currentGamePadState.ThumbSticks.Left;
-                _cursor += temp * new Vector2( 300f, -300f ) * (float) gameTime.ElapsedGameTime.TotalSeconds;
-                Mouse.SetPosition( (int) _cursor.X, (int) _cursor.Y );
+                _cursor += temp * new Vector2 ( 300f, -300f ) * (float) gameTime.ElapsedGameTime.TotalSeconds;
+                Mouse.SetPosition ( (int) _cursor.X, (int) _cursor.Y );
             }
             else {
                 _cursor.X = _currentMouseState.X;
                 _cursor.Y = _currentMouseState.Y;
             }
-            _cursor.X = MathHelper.Clamp( _cursor.X, 0f, _viewport.Width );
-            _cursor.Y = MathHelper.Clamp( _cursor.Y, 0f, _viewport.Height );
+            _cursor.X = MathHelper.Clamp ( _cursor.X, 0f, _viewport.Width );
+            _cursor.Y = MathHelper.Clamp ( _cursor.Y, 0f, _viewport.Height );
 
             if ( _cursorIsValid && oldCursor != _cursor ) {
                 _cursorMoved = true;
@@ -186,7 +186,7 @@ namespace Circular.Helpers {
             }
 
 #if WINDOWS
-            _cursorIsValid = _viewport.Bounds.Contains( _currentMouseState.X, _currentMouseState.Y );
+            _cursorIsValid = _viewport.Bounds.Contains ( _currentMouseState.X, _currentMouseState.Y );
 #elif WINDOWS_PHONE
             if (_currentMouseState.LeftButton == ButtonState.Pressed)
             {
@@ -201,9 +201,9 @@ namespace Circular.Helpers {
 
         public void Draw () {
             if ( _cursorIsVisible && _cursorIsValid ) {
-                _manager.SpriteBatch.Begin();
-                _manager.SpriteBatch.Draw( _cursorSprite.Texture, _cursor, null, Color.White, 0f, _cursorSprite.Origin, 1f, SpriteEffects.None, 0f );
-                _manager.SpriteBatch.End();
+                _manager.SpriteBatch.Begin ();
+                _manager.SpriteBatch.Draw ( _cursorSprite.Texture, _cursor, null, Color.White, 0f, _cursorSprite.Origin, 1f, SpriteEffects.None, 0f );
+                _manager.SpriteBatch.End ();
             }
 #if WINDOWS_PHONE
             if (_handleVirtualStick)
@@ -219,35 +219,35 @@ namespace Circular.Helpers {
 
         private GamePadState HandleVirtualStickWin () {
             Vector2 _leftStick = Vector2.Zero;
-            List<Buttons> _buttons = new List<Buttons>();
+            var _buttons = new List < Buttons > ();
 
-            if ( _currentKeyboardState.IsKeyDown( Keys.A ) ) {
+            if ( _currentKeyboardState.IsKeyDown ( Keys.A ) ) {
                 _leftStick.X -= 1f;
             }
-            if ( _currentKeyboardState.IsKeyDown( Keys.S ) ) {
+            if ( _currentKeyboardState.IsKeyDown ( Keys.S ) ) {
                 _leftStick.Y -= 1f;
             }
-            if ( _currentKeyboardState.IsKeyDown( Keys.D ) ) {
+            if ( _currentKeyboardState.IsKeyDown ( Keys.D ) ) {
                 _leftStick.X += 1f;
             }
-            if ( _currentKeyboardState.IsKeyDown( Keys.W ) ) {
+            if ( _currentKeyboardState.IsKeyDown ( Keys.W ) ) {
                 _leftStick.Y += 1f;
             }
-            if ( _currentKeyboardState.IsKeyDown( Keys.Space ) ) {
-                _buttons.Add( Buttons.A );
+            if ( _currentKeyboardState.IsKeyDown ( Keys.Space ) ) {
+                _buttons.Add ( Buttons.A );
             }
-            if ( _currentKeyboardState.IsKeyDown( Keys.LeftControl ) ) {
-                _buttons.Add( Buttons.B );
+            if ( _currentKeyboardState.IsKeyDown ( Keys.LeftControl ) ) {
+                _buttons.Add ( Buttons.B );
             }
             if ( _leftStick != Vector2.Zero ) {
-                _leftStick.Normalize();
+                _leftStick.Normalize ();
             }
 
-            return new GamePadState( _leftStick, Vector2.Zero, 0f, 0f, _buttons.ToArray() );
+            return new GamePadState ( _leftStick, Vector2.Zero, 0f, 0f, _buttons.ToArray () );
         }
 
         private GamePadState HandleVirtualStickWP7 () {
-            List<Buttons> _buttons = new List<Buttons>();
+            var _buttons = new List < Buttons > ();
             Vector2 _stick = Vector2.Zero;
 #if WINDOWS_PHONE
             _phoneA.Pressed = false;
@@ -269,33 +269,33 @@ namespace Circular.Helpers {
             }
             _stick = _phoneStick.StickPosition;
 #endif
-            return new GamePadState( _stick, Vector2.Zero, 0f, 0f, _buttons.ToArray() );
+            return new GamePadState ( _stick, Vector2.Zero, 0f, 0f, _buttons.ToArray () );
         }
 
         /// <summary>
         ///   Helper for checking if a key was newly pressed during this update.
         /// </summary>
         public bool IsNewKeyPress ( Keys key ) {
-            return ( _currentKeyboardState.IsKeyDown( key ) &&
-                    _lastKeyboardState.IsKeyUp( key ) );
+            return ( _currentKeyboardState.IsKeyDown ( key ) &&
+                     _lastKeyboardState.IsKeyUp ( key ) );
         }
 
         public bool IsNewKeyRelease ( Keys key ) {
-            return ( _lastKeyboardState.IsKeyDown( key ) &&
-                    _currentKeyboardState.IsKeyUp( key ) );
+            return ( _lastKeyboardState.IsKeyDown ( key ) &&
+                     _currentKeyboardState.IsKeyUp ( key ) );
         }
 
         /// <summary>
         ///   Helper for checking if a button was newly pressed during this update.
         /// </summary>
         public bool IsNewButtonPress ( Buttons button ) {
-            return ( _currentGamePadState.IsButtonDown( button ) &&
-                    _lastGamePadState.IsButtonUp( button ) );
+            return ( _currentGamePadState.IsButtonDown ( button ) &&
+                     _lastGamePadState.IsButtonUp ( button ) );
         }
 
         public bool IsNewButtonRelease ( Buttons button ) {
-            return ( _lastGamePadState.IsButtonDown( button ) &&
-                    _currentGamePadState.IsButtonUp( button ) );
+            return ( _lastGamePadState.IsButtonDown ( button ) &&
+                     _currentGamePadState.IsButtonUp ( button ) );
         }
 
         /// <summary>
@@ -303,22 +303,22 @@ namespace Circular.Helpers {
         /// </summary>
         public bool IsNewMouseButtonPress ( MouseButtons button ) {
             switch ( button ) {
-                case MouseButtons.LeftButton:
+                case MouseButtons.LeftButton :
                     return ( _currentMouseState.LeftButton == ButtonState.Pressed &&
-                            _lastMouseState.LeftButton == ButtonState.Released );
-                case MouseButtons.RightButton:
+                             _lastMouseState.LeftButton == ButtonState.Released );
+                case MouseButtons.RightButton :
                     return ( _currentMouseState.RightButton == ButtonState.Pressed &&
-                            _lastMouseState.RightButton == ButtonState.Released );
-                case MouseButtons.MiddleButton:
+                             _lastMouseState.RightButton == ButtonState.Released );
+                case MouseButtons.MiddleButton :
                     return ( _currentMouseState.MiddleButton == ButtonState.Pressed &&
-                            _lastMouseState.MiddleButton == ButtonState.Released );
-                case MouseButtons.ExtraButton1:
+                             _lastMouseState.MiddleButton == ButtonState.Released );
+                case MouseButtons.ExtraButton1 :
                     return ( _currentMouseState.XButton1 == ButtonState.Pressed &&
-                            _lastMouseState.XButton1 == ButtonState.Released );
-                case MouseButtons.ExtraButton2:
+                             _lastMouseState.XButton1 == ButtonState.Released );
+                case MouseButtons.ExtraButton2 :
                     return ( _currentMouseState.XButton2 == ButtonState.Pressed &&
-                            _lastMouseState.XButton2 == ButtonState.Released );
-                default:
+                             _lastMouseState.XButton2 == ButtonState.Released );
+                default :
                     return false;
             }
         }
@@ -330,22 +330,22 @@ namespace Circular.Helpers {
         /// <param name="button">The button.</param>
         public bool IsNewMouseButtonRelease ( MouseButtons button ) {
             switch ( button ) {
-                case MouseButtons.LeftButton:
+                case MouseButtons.LeftButton :
                     return ( _lastMouseState.LeftButton == ButtonState.Pressed &&
-                            _currentMouseState.LeftButton == ButtonState.Released );
-                case MouseButtons.RightButton:
+                             _currentMouseState.LeftButton == ButtonState.Released );
+                case MouseButtons.RightButton :
                     return ( _lastMouseState.RightButton == ButtonState.Pressed &&
-                            _currentMouseState.RightButton == ButtonState.Released );
-                case MouseButtons.MiddleButton:
+                             _currentMouseState.RightButton == ButtonState.Released );
+                case MouseButtons.MiddleButton :
                     return ( _lastMouseState.MiddleButton == ButtonState.Pressed &&
-                            _currentMouseState.MiddleButton == ButtonState.Released );
-                case MouseButtons.ExtraButton1:
+                             _currentMouseState.MiddleButton == ButtonState.Released );
+                case MouseButtons.ExtraButton1 :
                     return ( _lastMouseState.XButton1 == ButtonState.Pressed &&
-                            _currentMouseState.XButton1 == ButtonState.Released );
-                case MouseButtons.ExtraButton2:
+                             _currentMouseState.XButton1 == ButtonState.Released );
+                case MouseButtons.ExtraButton2 :
                     return ( _lastMouseState.XButton2 == ButtonState.Pressed &&
-                            _currentMouseState.XButton2 == ButtonState.Released );
-                default:
+                             _currentMouseState.XButton2 == ButtonState.Released );
+                default :
                     return false;
             }
         }
@@ -354,35 +354,35 @@ namespace Circular.Helpers {
         ///   Checks for a "menu select" input action.
         /// </summary>
         public bool IsMenuSelect () {
-            return IsNewKeyPress( Keys.Space ) ||
-                   IsNewKeyPress( Keys.Enter ) ||
-                   IsNewButtonPress( Buttons.A ) ||
-                   IsNewButtonPress( Buttons.Start ) ||
-                   IsNewMouseButtonPress( MouseButtons.LeftButton );
+            return IsNewKeyPress ( Keys.Space ) ||
+                   IsNewKeyPress ( Keys.Enter ) ||
+                   IsNewButtonPress ( Buttons.A ) ||
+                   IsNewButtonPress ( Buttons.Start ) ||
+                   IsNewMouseButtonPress ( MouseButtons.LeftButton );
         }
 
         public bool IsMenuPressed () {
-            return _currentKeyboardState.IsKeyDown( Keys.Space ) ||
-                   _currentKeyboardState.IsKeyDown( Keys.Enter ) ||
-                   _currentGamePadState.IsButtonDown( Buttons.A ) ||
-                   _currentGamePadState.IsButtonDown( Buttons.Start ) ||
+            return _currentKeyboardState.IsKeyDown ( Keys.Space ) ||
+                   _currentKeyboardState.IsKeyDown ( Keys.Enter ) ||
+                   _currentGamePadState.IsButtonDown ( Buttons.A ) ||
+                   _currentGamePadState.IsButtonDown ( Buttons.Start ) ||
                    _currentMouseState.LeftButton == ButtonState.Pressed;
         }
 
         public bool IsMenuReleased () {
-            return IsNewKeyRelease( Keys.Space ) ||
-                   IsNewKeyRelease( Keys.Enter ) ||
-                   IsNewButtonRelease( Buttons.A ) ||
-                   IsNewButtonRelease( Buttons.Start ) ||
-                   IsNewMouseButtonRelease( MouseButtons.LeftButton );
+            return IsNewKeyRelease ( Keys.Space ) ||
+                   IsNewKeyRelease ( Keys.Enter ) ||
+                   IsNewButtonRelease ( Buttons.A ) ||
+                   IsNewButtonRelease ( Buttons.Start ) ||
+                   IsNewMouseButtonRelease ( MouseButtons.LeftButton );
         }
 
         /// <summary>
         ///   Checks for a "menu cancel" input action.
         /// </summary>
         public bool IsMenuCancel () {
-            return IsNewKeyPress( Keys.Escape ) ||
-                   IsNewButtonPress( Buttons.Back );
+            return IsNewKeyPress ( Keys.Escape ) ||
+                   IsNewButtonPress ( Buttons.Back );
         }
     }
 }

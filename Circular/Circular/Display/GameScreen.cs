@@ -98,7 +98,7 @@ namespace Circular.Display {
             get {
                 return !_otherScreenHasFocus &&
                        ( ScreenState == ScreenState.TransitionOn ||
-                        ScreenState == ScreenState.Active );
+                         ScreenState == ScreenState.Active );
             }
         }
 
@@ -131,14 +131,12 @@ namespace Circular.Display {
         /// <summary>
         /// Load graphics content for the screen.
         /// </summary>
-        public virtual void LoadContent () {
-        }
+        public virtual void LoadContent () {}
 
         /// <summary>
         /// Unload content for the screen.
         /// </summary>
-        public virtual void UnloadContent () {
-        }
+        public virtual void UnloadContent () {}
 
         /// <summary>
         /// Allows the screen to run logic, such as updating the transition position.
@@ -146,25 +144,25 @@ namespace Circular.Display {
         /// is active, hidden, or in the middle of a transition.
         /// </summary>
         public virtual void Update ( GameTime gameTime, bool otherScreenHasFocus,
-                                   bool coveredByOtherScreen ) {
+                                     bool coveredByOtherScreen ) {
             _otherScreenHasFocus = otherScreenHasFocus;
 
             if ( IsExiting ) {
                 // If the screen is going away to die, it should transition off.
                 ScreenState = ScreenState.TransitionOff;
 
-                if ( !UpdateTransition( gameTime, TransitionOffTime, 1 ) ) {
+                if ( !UpdateTransition ( gameTime, TransitionOffTime, 1 ) ) {
                     // When the transition finishes, remove the screen.
-                    ScreenManager.RemoveScreen( this );
+                    ScreenManager.RemoveScreen ( this );
                 }
             }
             else if ( coveredByOtherScreen ) {
                 // If the screen is covered by another, it should transition off.
-                ScreenState = UpdateTransition( gameTime, TransitionOffTime, 1 ) ? ScreenState.TransitionOff : ScreenState.Hidden;
+                ScreenState = UpdateTransition ( gameTime, TransitionOffTime, 1 ) ? ScreenState.TransitionOff : ScreenState.Hidden;
             }
             else {
                 // Otherwise the screen should transition on and become active.
-                ScreenState = UpdateTransition( gameTime, TransitionOnTime, -1 ) ? ScreenState.TransitionOn : ScreenState.Active;
+                ScreenState = UpdateTransition ( gameTime, TransitionOnTime, -1 ) ? ScreenState.TransitionOn : ScreenState.Active;
             }
         }
 
@@ -180,7 +178,7 @@ namespace Circular.Display {
             }
             else {
                 transitionDelta = (float) ( gameTime.ElapsedGameTime.TotalMilliseconds /
-                                           time.TotalMilliseconds );
+                                            time.TotalMilliseconds );
             }
 
             // Update the transition position.
@@ -188,8 +186,8 @@ namespace Circular.Display {
 
             // Did we reach the end of the transition?
             if ( ( ( direction < 0 ) && ( TransitionPosition <= 0 ) ) ||
-                ( ( direction > 0 ) && ( TransitionPosition >= 1 ) ) ) {
-                TransitionPosition = MathHelper.Clamp( TransitionPosition, 0, 1 );
+                 ( ( direction > 0 ) && ( TransitionPosition >= 1 ) ) ) {
+                TransitionPosition = MathHelper.Clamp ( TransitionPosition, 0, 1 );
                 return false;
             }
 
@@ -202,14 +200,12 @@ namespace Circular.Display {
         /// is only called when the screen is active, and not when some other
         /// screen has taken the focus.
         /// </summary>
-        public virtual void HandleInput ( InputHelper input, GameTime gameTime ) {
-        }
+        public virtual void HandleInput ( InputHelper input, GameTime gameTime ) {}
 
         /// <summary>
         /// This is called when the screen should draw itself.
         /// </summary>
-        public virtual void Draw ( GameTime gameTime ) {
-        }
+        public virtual void Draw ( GameTime gameTime ) {}
 
         /// <summary>
         /// Tells the screen to go away. Unlike ScreenManager.RemoveScreen, which
@@ -219,7 +215,7 @@ namespace Circular.Display {
         public void ExitScreen () {
             if ( TransitionOffTime == TimeSpan.Zero ) {
                 // If the screen has a zero transition time, remove it immediately.
-                ScreenManager.RemoveScreen( this );
+                ScreenManager.RemoveScreen ( this );
             }
             else {
                 // Otherwise flag that it should transition off and then exit.
