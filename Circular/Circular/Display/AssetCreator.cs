@@ -33,12 +33,12 @@ namespace Circular.Display {
 
         public static Vector2 CalculateOrigin ( Body b ) {
             var lBound = new Vector2 ( float.MaxValue );
-            AABB bounds;
             Transform trans;
             b.GetTransform ( out trans );
 
             for ( int i = 0; i < b.FixtureList.Count; ++i ) {
                 for ( int j = 0; j < b.FixtureList [i].Shape.ChildCount; ++j ) {
+                    AABB bounds;
                     b.FixtureList [i].Shape.ComputeAABB ( out bounds, ref trans, j );
                     Vector2.Min ( ref lBound, ref bounds.LowerBound, out lBound );
                 }

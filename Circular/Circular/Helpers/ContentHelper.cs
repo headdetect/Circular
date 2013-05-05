@@ -49,7 +49,7 @@ namespace Circular.Helpers {
             _textureList ["blank"].Name = "blank";
 
             // Load all graphics
-            string[] gfxFolders = { "Images", "Images/Backgrounds/", "Images/Sprites/", "Images/UI/", "Images/Materials/" };
+            string[] gfxFolders = { "Images", "Images/Backgrounds/", "Images/Sprites/", "Images/UI/", "Images/Materials/", "Images/Maps/" };
             foreach ( string folder in gfxFolders ) {
                 currentAssetFolder = new DirectoryInfo ( game.Content.RootDirectory + "/" + folder );
                 currentFileList = currentAssetFolder.GetFiles ( "*.xnb" );

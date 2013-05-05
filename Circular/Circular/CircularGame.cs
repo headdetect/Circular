@@ -11,7 +11,7 @@ namespace Circular {
         private readonly GraphicsDeviceManager _graphics;
 
         public CircularGame () {
-            Window.Title = "Farseer Samples Framework";
+            Window.Title = "Circular";
             _graphics = new GraphicsDeviceManager ( this ) {
                                                                PreferMultiSampling = true,
                                                                PreferredBackBufferWidth = 1280,

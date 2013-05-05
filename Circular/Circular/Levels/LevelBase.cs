@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using Circular.Display;
 using Circular.Helpers;
+using Circular.Utils;
 using FarseerPhysics;
+using FarseerPhysics.Common;
+using FarseerPhysics.Common.Decomposition;
+using FarseerPhysics.Common.PolygonManipulation;
 using FarseerPhysics.Dynamics;
 using FarseerPhysics.Dynamics.Joints;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace Circular.Levels {
@@ -19,8 +25,8 @@ namespace Circular.Levels {
         private Body _userAgent;
 
         protected LevelBase () {
-            TransitionOnTime = TimeSpan.FromSeconds ( 0.75 );
-            TransitionOffTime = TimeSpan.FromSeconds ( 0.75 );
+            TransitionOnTime = TimeSpan.FromSeconds( 0.75 );
+            TransitionOffTime = TimeSpan.FromSeconds( 0.75 );
             HasCursor = true;
             EnableCameraControl = true;
             _userAgent = null;
@@ -40,128 +46,128 @@ namespace Circular.Levels {
         }
 
         public override void LoadContent () {
-            base.LoadContent ();
+            base.LoadContent();
 
             //We enable diagnostics to show get values for our performance counters.
             Settings.EnableDiagnostics = true;
 
             if ( World == null ) {
-                World = new World ( Vector2.Zero );
+                World = new World( Vector2.Zero );
             }
             else {
-                World.Clear ();
+                World.Clear();
             }
 
             if ( DebugView == null ) {
-                DebugView = new DebugViewXNA ( World );
-                DebugView.RemoveFlags ( DebugViewFlags.Shape );
-                DebugView.RemoveFlags ( DebugViewFlags.Joint );
+                DebugView = new DebugViewXNA( World );
+                DebugView.RemoveFlags( DebugViewFlags.Shape );
+                DebugView.RemoveFlags( DebugViewFlags.Joint );
                 DebugView.DefaultShapeColor = Color.White;
                 DebugView.SleepingShapeColor = Color.LightGray;
-                DebugView.LoadContent ( ScreenManager.GraphicsDevice, ScreenManager.Content );
+                DebugView.LoadContent( ScreenManager.GraphicsDevice, ScreenManager.Content );
             }
 
             if ( Camera == null ) {
-                Camera = new Camera ( ScreenManager.GraphicsDevice );
+                Camera = new Camera( ScreenManager.GraphicsDevice );
             }
             else {
-                Camera.ResetCamera ();
+                Camera.ResetCamera();
             }
 
             // Loading may take a while... so prevent the game from "catching up" once we finished loading
-            ScreenManager.Game.ResetElapsedTime ();
+            ScreenManager.Game.ResetElapsedTime();
         }
 
         public override void Update ( GameTime gameTime, bool otherScreenHasFocus, bool coveredByOtherScreen ) {
             if ( !coveredByOtherScreen && !otherScreenHasFocus ) {
                 // variable time step but never less then 30 Hz
-                World.Step ( Math.Min ( (float) gameTime.ElapsedGameTime.TotalSeconds, ( 1f / 30f ) ) );
+                World.Step( Math.Min( (float) gameTime.ElapsedGameTime.TotalSeconds, ( 1f / 30f ) ) );
             }
             else {
-                World.Step ( 0f );
+                World.Step( 0f );
             }
-            Camera.Update ( gameTime );
-            base.Update ( gameTime, otherScreenHasFocus, coveredByOtherScreen );
+            Camera.Update( gameTime );
+            base.Update( gameTime, otherScreenHasFocus, coveredByOtherScreen );
         }
 
         public override void HandleInput ( InputHelper input, GameTime gameTime ) {
             // Control debug view
-            if ( input.IsNewButtonPress ( Buttons.Start ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.Shape );
-                EnableOrDisableFlag ( DebugViewFlags.DebugPanel );
-                EnableOrDisableFlag ( DebugViewFlags.PerformanceGraph );
-                EnableOrDisableFlag ( DebugViewFlags.Joint );
-                EnableOrDisableFlag ( DebugViewFlags.ContactPoints );
-                EnableOrDisableFlag ( DebugViewFlags.ContactNormals );
-                EnableOrDisableFlag ( DebugViewFlags.Controllers );
+            if ( input.IsNewButtonPress( Buttons.Start ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Shape );
+                EnableOrDisableFlag( DebugViewFlags.DebugPanel );
+                EnableOrDisableFlag( DebugViewFlags.PerformanceGraph );
+                EnableOrDisableFlag( DebugViewFlags.Joint );
+                EnableOrDisableFlag( DebugViewFlags.ContactPoints );
+                EnableOrDisableFlag( DebugViewFlags.ContactNormals );
+                EnableOrDisableFlag( DebugViewFlags.Controllers );
             }
 
-            if ( input.IsNewKeyPress ( Keys.F1 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.Shape );
+            if ( input.IsNewKeyPress( Keys.F1 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Shape );
             }
-            if ( input.IsNewKeyPress ( Keys.F2 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.DebugPanel );
-                EnableOrDisableFlag ( DebugViewFlags.PerformanceGraph );
+            if ( input.IsNewKeyPress( Keys.F2 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.DebugPanel );
+                EnableOrDisableFlag( DebugViewFlags.PerformanceGraph );
             }
-            if ( input.IsNewKeyPress ( Keys.F3 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.Joint );
+            if ( input.IsNewKeyPress( Keys.F3 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Joint );
             }
-            if ( input.IsNewKeyPress ( Keys.F4 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.ContactPoints );
-                EnableOrDisableFlag ( DebugViewFlags.ContactNormals );
+            if ( input.IsNewKeyPress( Keys.F4 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.ContactPoints );
+                EnableOrDisableFlag( DebugViewFlags.ContactNormals );
             }
-            if ( input.IsNewKeyPress ( Keys.F5 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.PolygonPoints );
+            if ( input.IsNewKeyPress( Keys.F5 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.PolygonPoints );
             }
-            if ( input.IsNewKeyPress ( Keys.F6 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.Controllers );
+            if ( input.IsNewKeyPress( Keys.F6 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Controllers );
             }
-            if ( input.IsNewKeyPress ( Keys.F7 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.CenterOfMass );
+            if ( input.IsNewKeyPress( Keys.F7 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.CenterOfMass );
             }
-            if ( input.IsNewKeyPress ( Keys.F8 ) ) {
-                EnableOrDisableFlag ( DebugViewFlags.AABB );
+            if ( input.IsNewKeyPress( Keys.F8 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.AABB );
             }
 
-            if ( input.IsNewButtonPress ( Buttons.Back ) || input.IsNewKeyPress ( Keys.Escape ) ) {
-                ExitScreen ();
+            if ( input.IsNewButtonPress( Buttons.Back ) || input.IsNewKeyPress( Keys.Escape ) ) {
+                ExitScreen();
             }
 
             if ( HasCursor ) {
-                HandleCursor ( input );
+                HandleCursor( input );
             }
 
             if ( _userAgent != null ) {
-                HandleUserAgent ( input );
+                HandleUserAgent( input );
             }
 
             if ( EnableCameraControl ) {
-                HandleCamera ( input, gameTime );
+                HandleCamera( input, gameTime );
             }
 
-            base.HandleInput ( input, gameTime );
+            base.HandleInput( input, gameTime );
         }
 
         private void HandleCursor ( InputHelper input ) {
-            Vector2 position = Camera.ConvertScreenToWorld ( input.Cursor );
+            Vector2 position = Camera.ConvertScreenToWorld( input.Cursor );
 
-            if ( ( input.IsNewButtonPress ( Buttons.A ) ||
-                   input.IsNewMouseButtonPress ( MouseButtons.LeftButton ) ) &&
+            if ( ( input.IsNewButtonPress( Buttons.A ) ||
+                   input.IsNewMouseButtonPress( MouseButtons.LeftButton ) ) &&
                  _fixedMouseJoint == null ) {
-                Fixture savedFixture = World.TestPoint ( position );
+                Fixture savedFixture = World.TestPoint( position );
                 if ( savedFixture != null ) {
                     Body body = savedFixture.Body;
-                    _fixedMouseJoint = new FixedMouseJoint ( body, position );
+                    _fixedMouseJoint = new FixedMouseJoint( body, position );
                     _fixedMouseJoint.MaxForce = 1000.0f * body.Mass;
-                    World.AddJoint ( _fixedMouseJoint );
+                    World.AddJoint( _fixedMouseJoint );
                     body.Awake = true;
                 }
             }
 
-            if ( ( input.IsNewButtonRelease ( Buttons.A ) ||
-                   input.IsNewMouseButtonRelease ( MouseButtons.LeftButton ) ) &&
+            if ( ( input.IsNewButtonRelease( Buttons.A ) ||
+                   input.IsNewMouseButtonRelease( MouseButtons.LeftButton ) ) &&
                  _fixedMouseJoint != null ) {
-                World.RemoveJoint ( _fixedMouseJoint );
+                World.RemoveJoint( _fixedMouseJoint );
                 _fixedMouseJoint = null;
             }
 
@@ -173,74 +179,74 @@ namespace Circular.Levels {
         private void HandleCamera ( InputHelper input, GameTime gameTime ) {
             Vector2 camMove = Vector2.Zero;
 
-            if ( input.KeyboardState.IsKeyDown ( Keys.Up ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.Up ) ) {
                 camMove.Y -= 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.Down ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.Down ) ) {
                 camMove.Y += 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.Left ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.Left ) ) {
                 camMove.X -= 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.Right ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.Right ) ) {
                 camMove.X += 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.PageUp ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.PageUp ) ) {
                 Camera.Zoom += 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.PageDown ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.PageDown ) ) {
                 Camera.Zoom -= 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
             }
             if ( camMove != Vector2.Zero ) {
-                Camera.MoveCamera ( camMove );
+                Camera.MoveCamera( camMove );
             }
-            if ( input.IsNewKeyPress ( Keys.Home ) ) {
-                Camera.ResetCamera ();
+            if ( input.IsNewKeyPress( Keys.Home ) ) {
+                Camera.ResetCamera();
             }
         }
 
         private void HandleUserAgent ( InputHelper input ) {
-            Vector2 force = _agentForce * new Vector2 ( input.GamePadState.ThumbSticks.Right.X,
+            Vector2 force = _agentForce * new Vector2( input.GamePadState.ThumbSticks.Right.X,
                                                         -input.GamePadState.ThumbSticks.Right.Y );
             float torque = _agentTorque * ( input.GamePadState.Triggers.Right - input.GamePadState.Triggers.Left );
 
-            _userAgent.ApplyForce ( force );
-            _userAgent.ApplyTorque ( torque );
+            _userAgent.ApplyForce( force );
+            _userAgent.ApplyTorque( torque );
 
             float forceAmount = _agentForce * 0.6f;
 
             force = Vector2.Zero;
             torque = 0;
 
-            if ( input.KeyboardState.IsKeyDown ( Keys.A ) ) {
-                force += new Vector2 ( -forceAmount, 0 );
+            if ( input.KeyboardState.IsKeyDown( Keys.A ) ) {
+                force += new Vector2( -forceAmount, 0 );
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.S ) ) {
-                force += new Vector2 ( 0, forceAmount );
+            if ( input.KeyboardState.IsKeyDown( Keys.S ) ) {
+                force += new Vector2( 0, forceAmount );
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.D ) ) {
-                force += new Vector2 ( forceAmount, 0 );
+            if ( input.KeyboardState.IsKeyDown( Keys.D ) ) {
+                force += new Vector2( forceAmount, 0 );
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.W ) ) {
-                force += new Vector2 ( 0, -forceAmount );
+            if ( input.KeyboardState.IsKeyDown( Keys.W ) ) {
+                force += new Vector2( 0, -forceAmount );
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.Q ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.Q ) ) {
                 torque -= _agentTorque;
             }
-            if ( input.KeyboardState.IsKeyDown ( Keys.E ) ) {
+            if ( input.KeyboardState.IsKeyDown( Keys.E ) ) {
                 torque += _agentTorque;
             }
 
-            _userAgent.ApplyForce ( force );
-            _userAgent.ApplyTorque ( torque );
+            _userAgent.ApplyForce( force );
+            _userAgent.ApplyTorque( torque );
         }
 
         private void EnableOrDisableFlag ( DebugViewFlags flag ) {
             if ( ( DebugView.Flags & flag ) == flag ) {
-                DebugView.RemoveFlags ( flag );
+                DebugView.RemoveFlags( flag );
             }
             else {
-                DebugView.AppendFlags ( flag );
+                DebugView.AppendFlags( flag );
             }
         }
 
@@ -248,8 +254,42 @@ namespace Circular.Levels {
             Matrix projection = Camera.SimProjection;
             Matrix view = Camera.SimView;
 
-            DebugView.RenderDebugData ( ref projection, ref view );
-            base.Draw ( gameTime );
+            DebugView.RenderDebugData( ref projection, ref view );
+            base.Draw( gameTime );
         }
+
+        #region Helpers
+
+        public static List<Vertices> GetVertsFromMapImage ( string image, float scale, out Vector2 origin ) {
+            return GetVertsFromMapImage( ContentHelper.GetTexture( image ), scale, out origin );
+        }
+
+        public static List<Vertices> GetVertsFromMapImage ( Texture2D image, float scale, out Vector2 origin ) {
+            uint[] data = new uint[ image.Width * image.Height ];
+            image.GetData( data );
+
+            Vertices textureVertices = PolygonTools.CreatePolygon( data, image.Width, false );
+            Vector2 centroid = -textureVertices.GetCentroid();
+            textureVertices.Translate( ref centroid );
+
+            origin = -centroid;
+
+            //We simplify the vertices found in the texture.
+            textureVertices = SimplifyTools.ReduceByDistance( textureVertices, 4f );
+
+            //Since it is a concave polygon, we need to partition it into several smaller convex polygons
+
+            //scale the vertices from graphics space to sim space
+
+            var list = BayazitDecomposer.ConvexPartition( textureVertices );
+            
+            Vector2 vertScale = new Vector2( ConvertUnits.ToSimUnits( 1 ) ) * scale;
+            foreach ( Vertices vertices in list ) {
+                vertices.Scale( ref vertScale );
+            }
+            return list;
+        }
+
+        #endregion
     }
 }

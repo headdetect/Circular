@@ -56,11 +56,10 @@ namespace Circular.Display.Screens {
             _menuEntries.Add ( entry );
         }
 
-        public void AddLevelItem ( LevelBase level ) {
-            var entry = new MenuEntry ( this, level.GetTitle (), EntryType.Screen, level, ContentHelper.GetTexture ( "logo" ) );
+        public void AddLevelItem ( LevelBase level, Texture2D preview ) {
+            var entry = new MenuEntry ( this, level.GetTitle (), EntryType.Screen, level, preview );
             _menuEntries.Add ( entry );
         }
-
         public override void LoadContent () {
             base.LoadContent ();
 
@@ -82,14 +81,14 @@ namespace Circular.Display.Screens {
             _headerPos = new Vector2 ( viewport.Width / 2 - _texHeader.Width / 2, PADDING );
 
             _menuBorderMargin = font.MeasureString ( "M" ).Y * 0.8f;
-            _menuBorderTop = PADDING + ( ( viewport.Height - _menuBorderMargin * ( NumEntries - 1 ) ) / 2f ) + PADDING;
+            _menuBorderTop = PADDING + ( ( viewport.Height - _menuBorderMargin * ( NumEntries - 1 ) ) / 2f ) + PADDING + 50;
             _menuBorderBottom = ( viewport.Height + _menuBorderMargin * ( NumEntries - 1 ) ) / 2f;
 
             _menuOffset = 0f;
             _maxOffset = Math.Max ( 0f, ( _menuEntries.Count - NumEntries ) * _menuBorderMargin );
 
             _previewOrigin = new Vector2 ( viewport.Width / 4f, viewport.Height / 4f );
-            _previewPosition = new Vector2 ( viewport.Width - _previewOrigin.X, ( viewport.Height - _headerRegion.Height ) / 2f + _headerRegion.Height );
+            _previewPosition = new Vector2( PADDING + 350 + PADDING + ( ScreenManager.GraphicsDevice.Viewport.Width / 4f ), ( viewport.Height - _headerRegion.Height ) / 2f + _headerRegion.Height );
 
             _scrollUp = new MenuButton ( _texScrollButton, false, new Vector2 ( scrollBarPos, _menuBorderTop - _texScrollButton.Height ), this );
             _scrollDown = new MenuButton ( _texScrollButton, true, new Vector2 ( scrollBarPos, _menuBorderBottom + _texScrollButton.Height ), this );
@@ -209,7 +208,7 @@ namespace Circular.Display.Screens {
 
             // update each menu entry's location in turn
             for ( int i = 0; i < _menuEntries.Count; ++i ) {
-                position.X = PADDING + ( PADDING + _scrollDown.Position.X + _scrollDown.Sprite.Width + PADDING ) + PADDING * 3;
+                position.X = PADDING + ( PADDING + _scrollDown.Position.X + _scrollDown.Sprite.Width + PADDING ) + PADDING + 50;
                 if ( ScreenState == ScreenState.TransitionOn ) {
                     position.X -= transitionOffset * 256;
                 }
@@ -236,6 +235,8 @@ namespace Circular.Display.Screens {
                 // move down for the next entry the size of this entry
                 position.Y += _menuEntries [i].GetHeight ();
             }
+
+
             Vector2 scrollPos = _scrollSlider.Position;
             scrollPos.Y = MathHelper.Lerp ( _menuBorderTop, _menuBorderBottom, _menuOffset / _maxOffset );
             _scrollSlider.Position = scrollPos;
@@ -290,5 +291,7 @@ namespace Circular.Display.Screens {
             _scrollDown.Draw ();
             spriteBatch.End ();
         }
+
+
     }
 }
