@@ -21,6 +21,7 @@
 //-----------------------------------------------------------------------------
 
 using System;
+using Circular.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -157,7 +158,7 @@ namespace Circular.Display.Effects {
         /// </summary>
         public GaussianBlur ( Game game ) {
             this.game = game;
-            effect = ContentWrapper.GetEffect( "GaussianBlur" );
+            effect = ContentHelper.GetEffect( "GaussianBlur" );
         }
 
         /// <summary>

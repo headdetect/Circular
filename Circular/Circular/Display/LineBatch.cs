@@ -1,4 +1,6 @@
 ﻿using System;
+using Circular.Helpers;
+using Circular.Utils;
 using FarseerPhysics;
 using FarseerPhysics.Collision.Shapes;
 using FarseerPhysics.Common;
@@ -8,11 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
 namespace Circular.Display {
     public class LineBatch {
         private const int DefaultBufferSize = 500;
-
-        // a basic effect, which contains the shaders that we will use to draw our
-        // primitives.
-        private BasicEffect _basicEffect;
-
+        
         private GraphicsDevice _device;
 
         private readonly Texture2D blank;
@@ -23,8 +21,7 @@ namespace Circular.Display {
                 throw new ArgumentNullException( "graphicsDevice" );
             }
 
-            blank = new Texture2D( graphicsDevice, 1, 1, false, SurfaceFormat.Color );
-            blank.SetData( new[] { Color.White } );
+            blank = ContentHelper.GetTexture ( "blank" );
         }
 
 
@@ -42,7 +39,7 @@ namespace Circular.Display {
 
         public void DrawLineShape ( SpriteBatch batch, Shape shape, Color color, float width ) {
             if ( shape.ShapeType != ShapeType.Edge &&
-                shape.ShapeType != ShapeType.Chain ) {
+                shape.ShapeType != ShapeType.Loop ) {
                 throw new NotSupportedException( "The specified shapeType is not supported by LineBatch." );
             }
             switch ( shape.ShapeType ) {
@@ -51,8 +48,8 @@ namespace Circular.Display {
                         DrawLine( batch, width, color, edge.Vertex1, edge.Vertex2 );
                     }
                     break;
-                case ShapeType.Chain: {
-                        ChainShape chain = (ChainShape) shape;
+                case ShapeType.Polygon: {
+                    LoopShape chain = (LoopShape) shape;
                         for ( int i = 0; i < chain.Vertices.Count; ++i ) {
                             DrawLine( batch, width, color, chain.Vertices[ i ], chain.Vertices.NextVertex( i ) );
                         }

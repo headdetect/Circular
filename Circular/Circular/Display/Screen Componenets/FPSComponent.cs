@@ -1,31 +1,31 @@
 ﻿using System;
 using System.Globalization;
+using Circular.Helpers;
 using Circular.Managers;
-using Circular.Display;
 using Microsoft.Xna.Framework;
 
-namespace Circular.Display {
-    public class FPSComponent : IHUDComponent {
-
+namespace FarseerPhysics.SamplesFramework {
+    /// <summary>
+    /// Displays the FPS
+    /// </summary>
+    public class FPSComponent : DrawableGameComponent {
         private TimeSpan _elapsedTime = TimeSpan.Zero;
         private NumberFormatInfo _format;
         private int _frameCounter;
         private int _frameRate;
         private Vector2 _position;
-        private CircularGame _game;
+        private ScreenManager _screenManager;
 
-        public FPSComponent ( CircularGame game ) {
-            this._game = game;
-            this._format = new NumberFormatInfo() {
-                NumberDecimalSeparator = "."
-            };
-
+        public FPSComponent ( ScreenManager screenManager )
+            : base( screenManager.Game ) {
+            _screenManager = screenManager;
+            _format = new NumberFormatInfo();
+            _format.NumberDecimalSeparator = ".";
 #if XBOX
-            this._position = new Vector2(55, 35);
+            _position = new Vector2(55, 35);
 #else
-            this._position = new Vector2( 30, 25 );
+            _position = new Vector2( 30, 25 );
 #endif
-
         }
 
         public override void Update ( GameTime gameTime ) {
@@ -41,22 +41,14 @@ namespace Circular.Display {
         public override void Draw ( GameTime gameTime ) {
             _frameCounter++;
 
-            string fps = string.Format( _format, "{0} FPS", _frameRate );
+            string fps = string.Format( _format, "{0} fps", _frameRate );
 
-            _game.SpriteBatch.Begin();
-
-            /* Shadow */
-            _game.SpriteBatch.DrawString( ContentManager.FPSFont, fps, _position + Vector2.One, Color.Black );
-
-            /* Forground */
-            _game.SpriteBatch.DrawString( ContentManager.FPSFont, fps, _position, Color.White );
-
-
-            _game.SpriteBatch.End();
-        }
-
-
-        public override void Init () {
+            _screenManager.SpriteBatch.Begin();
+            _screenManager.SpriteBatch.DrawString( ContentHelper.GetFont( "fpsfont" ), fps,
+                                                  _position + Vector2.One, Color.Black );
+            _screenManager.SpriteBatch.DrawString( ContentHelper.GetFont( "fpsfont" ), fps,
+                                                  _position, Color.White );
+            _screenManager.SpriteBatch.End();
         }
     }
 }

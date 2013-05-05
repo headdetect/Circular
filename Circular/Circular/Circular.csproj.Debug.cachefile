@@ -1,7 +1,6 @@
 Content\Images\Backgrounds\LayerOne.xnb
 Content\Images\Backgrounds\LayerThree.xnb
 Content\Images\Backgrounds\LayerTwo.xnb
-Content\Images\CursorTexture.xnb
 Content\Images\Header.xnb
 Content\Images\Sprites\car.xnb
 Content\Images\Sprites\wheel.xnb
@@ -9,3 +8,13 @@ Content\Images\logo.xnb
 Content\Fonts\fpsfont.xnb
 Content\Sounds\click.xnb
 Content\Effects\GaussianBlur.xnb
+Content\Images\cursor.xnb
+Content\Images\UI\popup.xnb
+Content\Images\UI\gradient.xnb
+Content\Images\UI\arrow.xnb
+Content\Images\UI\slider.xnb
+Content\Images\Materials\dots.xnb
+Content\Images\Materials\pavement.xnb
+Content\Images\Materials\squares.xnb
+Content\Images\Materials\waves.xnb
+Content\Fonts\menufont.xnb

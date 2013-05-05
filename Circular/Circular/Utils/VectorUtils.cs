@@ -48,7 +48,7 @@ namespace Circular.Utils {
             Vertices verts = new Vertices( vertices );
             Vector2 scale = ConvertUnits.ToDisplayUnits( Vector2.One );
             verts.Scale( ref scale );
-            AABB vertsBounds = verts.GetAABB();
+            AABB vertsBounds = verts.GetCollisionBox();
             verts.Translate( -vertsBounds.Center );
             return new Vector2( vertsBounds.UpperBound.X - vertsBounds.LowerBound.X,
                                             vertsBounds.UpperBound.Y - vertsBounds.LowerBound.Y );

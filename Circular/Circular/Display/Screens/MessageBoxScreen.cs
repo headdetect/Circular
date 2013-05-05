@@ -1,9 +1,8 @@
 ﻿using System;
 using Circular.Helpers;
-using Circular.Utils;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Circular.Display.Screens
 {
@@ -11,18 +10,14 @@ namespace Circular.Display.Screens
     /// A popup message box screen, used to display "are you sure?"
     /// confirmation messages.
     /// </summary>
-    public class DescriptionBoxScreen : GameScreen
+    public class MessageBoxScreen : GameScreen
     {
-        private const float HorizontalPadding = 32f;
-        private const float VerticalPadding = 16f;
-
+        private Rectangle _backgroundRectangle;
+        private Texture2D _gradientTexture;
         private string _message;
-        private Vector2 _topLeft;
-        private Vector2 _bottomRight;
         private Vector2 _textPosition;
-        private SpriteFont _font;
 
-        public DescriptionBoxScreen(string message)
+        public MessageBoxScreen(string message)
         {
             _message = message;
 
@@ -39,23 +34,25 @@ namespace Circular.Display.Screens
         /// Whenever a subsequent MessageBoxScreen tries to load this same content,
         /// it will just get back another reference to the already loaded data.
         /// </summary>
-        public override void LoadContent()
-        {
-            _font = ContentWrapper.GetFont("fpsfont");
+        public override void LoadContent() {
+            SpriteFont font = ContentHelper.GetFont ( "fpsfont" );
+            ContentManager content = ScreenManager.Game.Content;
+            _gradientTexture = ContentHelper.GetTexture( "popup" );
 
             // Center the message text in the viewport.
-            Viewport viewport = Framework.GraphicsDevice.Viewport;
+            Viewport viewport = ScreenManager.GraphicsDevice.Viewport;
             Vector2 viewportSize = new Vector2(viewport.Width, viewport.Height);
-            Vector2 textSize = _font.MeasureString(_message);
+            Vector2 textSize = font.MeasureString(_message);
             _textPosition = (viewportSize - textSize) / 2;
 
             // The background includes a border somewhat larger than the text itself.
-            _topLeft.X = _textPosition.X - HorizontalPadding;
-            _topLeft.Y = _textPosition.Y - VerticalPadding;
-            _bottomRight.X = _textPosition.X + textSize.X + HorizontalPadding;
-            _bottomRight.Y = _textPosition.Y + textSize.Y + VerticalPadding;
+            const int hPad = 32;
+            const int vPad = 16;
 
-            base.LoadContent();
+            _backgroundRectangle = new Rectangle((int)_textPosition.X - hPad,
+                                                 (int)_textPosition.Y - vPad,
+                                                 (int)textSize.X + hPad * 2,
+                                                 (int)textSize.Y + vPad * 2);
         }
 
         /// <summary>
@@ -63,7 +60,8 @@ namespace Circular.Display.Screens
         /// </summary>
         public override void HandleInput(InputHelper input, GameTime gameTime)
         {
-            if (input.IsMenuSelect() || input.IsMenuCancel() || input.IsNewKeyPress(Keys.F1) || input.IsNewButtonPress(Buttons.Start))
+            if (input.IsMenuSelect() || input.IsMenuCancel() ||
+                input.IsNewMouseButtonPress(MouseButtons.LeftButton))
             {
                 ExitScreen();
             }
@@ -74,15 +72,22 @@ namespace Circular.Display.Screens
         /// </summary>
         public override void Draw(GameTime gameTime)
         {
-            Quads.Begin();
-            Quads.Render(_topLeft, _bottomRight, null, true, ContentWrapper.Black, ContentWrapper.Grey * 0.65f);
-            Quads.End();
+            SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
+            SpriteFont font = ContentHelper.GetFont( "fpsfont" );
 
-            Sprites.Begin();
+            // Fade the popup alpha during transitions.
+            Color color = Color.White * TransitionAlpha * (2f / 3f);
+
+            spriteBatch.Begin();
+
+            // Draw the background rectangle.
+            spriteBatch.Draw(_gradientTexture, _backgroundRectangle, color);
+
             // Draw the message box text.
-            Sprites.DrawString(_font, _message, _textPosition + Vector2.One, ContentWrapper.Black);
-            Sprites.DrawString(_font, _message, _textPosition, ContentWrapper.Beige);
-            Sprites.End();
+            spriteBatch.DrawString(font, _message, _textPosition + Vector2.One, Color.Black);
+            spriteBatch.DrawString(font, _message, _textPosition, Color.White);
+
+            spriteBatch.End();
         }
     }
 }

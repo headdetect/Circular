@@ -2,20 +2,20 @@ using System;
 using Circular.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using ContentManager = Microsoft.Xna.Framework.Content.ContentManager;
 
-namespace Circular.Display.Screens
-{
-    public class LogoScreen : GameScreen
-    {
+namespace Circular.Display.Screens {
+    public class LogoScreen : GameScreen {
+
+        private ContentManager _content;
+        private Rectangle _destination;
         private TimeSpan _duration;
         private Texture2D _farseerLogoTexture;
-        private int width, height;
 
-        public LogoScreen(TimeSpan duration)
-        {
+        public LogoScreen ( TimeSpan duration ) {
             _duration = duration;
-            HasCursor = false;
-            TransitionOffTime = TimeSpan.FromSeconds(0.6);
+            TransitionOffTime = TimeSpan.FromSeconds( 2.0 );
         }
 
         /// <summary>
@@ -25,40 +25,51 @@ namespace Circular.Display.Screens
         /// used the shared ContentManager provided by the Game class, the content
         /// would remain loaded forever.
         /// </summary>
-        public override void LoadContent()
-        {
-            _farseerLogoTexture = ContentWrapper.GetTexture("logo");
-            Viewport viewport = Framework.GraphicsDevice.Viewport;
-            width = viewport.Width;
-            height = viewport.Height;
+        public override void LoadContent () {
+            if ( _content == null ) {
+                _content = new ContentManager( ScreenManager.Game.Services, "Content" );
+            }
+
+            _farseerLogoTexture = ContentHelper.GetTexture( "logo" );
+
+            Viewport viewport = ScreenManager.GraphicsDevice.Viewport;
+            int rectHeight = viewport.Height;
+            int rectWidth = viewport.Width;
+
+            _destination = new Rectangle( 0, 0, rectWidth, rectHeight );
         }
 
-        public override void HandleInput(InputHelper input, GameTime gameTime)
-        {
-            if (input.IsMenuSelect() || input.IsMenuCancel())
-            {
+        /// <summary>
+        /// Unloads graphics content for this screen.
+        /// </summary>
+        public override void UnloadContent () {
+            _content.Unload();
+        }
+
+        public override void HandleInput ( InputHelper input, GameTime gameTime ) {
+            if ( input.KeyboardState.GetPressedKeys().Length > 0 ||
+                input.GamePadState.IsButtonDown( Buttons.A | Buttons.Start | Buttons.Back ) ||
+                input.MouseState.LeftButton == ButtonState.Pressed ) {
                 _duration = TimeSpan.Zero;
             }
         }
 
-        public override void Update(GameTime gameTime, bool otherScreenHasFocus, bool coveredByOtherScreen)
-        {
+        public override void Update ( GameTime gameTime, bool otherScreenHasFocus,
+                                    bool coveredByOtherScreen ) {
             _duration -= gameTime.ElapsedGameTime;
-            if (_duration <= TimeSpan.Zero)
-            {
+            if ( _duration <= TimeSpan.Zero ) {
                 ExitScreen();
             }
 
-            base.Update(gameTime, otherScreenHasFocus, coveredByOtherScreen);
+            base.Update( gameTime, otherScreenHasFocus, coveredByOtherScreen );
         }
 
-        public override void Draw(GameTime gameTime)
-        {
-            Framework.GraphicsDevice.Clear(Color.White);
+        public override void Draw ( GameTime gameTime ) {
+            ScreenManager.GraphicsDevice.Clear( Color.White );
 
-            Sprites.Begin(SpriteSortMode.Texture, BlendState.Opaque, SamplerState.AnisotropicClamp, null, RasterizerState.CullNone);
-            Sprites.Draw(_farseerLogoTexture, new Rectangle(0, 0, width, height), Color.White);
-            Sprites.End();
+            ScreenManager.SpriteBatch.Begin();
+            ScreenManager.SpriteBatch.Draw( _farseerLogoTexture, _destination, Color.White );
+            ScreenManager.SpriteBatch.End();
         }
     }
 }

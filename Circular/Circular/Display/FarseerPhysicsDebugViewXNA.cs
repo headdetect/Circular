@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Circular.Display;
+using Circular.Helpers;
+using Circular.Utils;
+using FarseerPhysics;
 using FarseerPhysics.Collision;
 using FarseerPhysics.Collision.Shapes;
 using FarseerPhysics.Common;
@@ -14,13 +16,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace FarseerPhysics.DebugView {
+namespace Circular.Display {
     /// <summary>
     /// A debug view that works in XNA.
     /// A debug view shows you what happens inside the physics engine. You can view
     /// bodies, joints, fixtures and more.
     /// </summary>
-    public class DebugViewXNA : DebugViewBase, IDisposable {
+    public class DebugViewXNA : DebugView, IDisposable {
         //Drawing
         private PrimitiveBatch _primitiveBatch;
         private SpriteBatch _batch;
@@ -86,10 +88,20 @@ namespace FarseerPhysics.DebugView {
             AppendFlags( DebugViewFlags.Joint );
         }
 
+        public void BeginCustomDraw ( ref Matrix projection, ref Matrix view ) {
+            _primitiveBatch.Begin( ref projection, ref view );
+        }
+
+        public void EndCustomDraw () {
+            _primitiveBatch.End();
+        }
+
         #region IDisposable Members
 
         public void Dispose () {
-            World.ContactManager.PreSolve -= PreSolve;
+            if ( World.ContactManager != null ) {
+                World.ContactManager.PreSolve -= PreSolve;
+            }
         }
 
         #endregion
@@ -105,7 +117,7 @@ namespace FarseerPhysics.DebugView {
                 Fixture fixtureA = contact.FixtureA;
 
                 FixedArray2<PointState> state1, state2;
-                Collision.Collision.GetPointStates( out state1, out state2, ref oldManifold, ref manifold );
+                FarseerPhysics.Collision.Collision.GetPointStates( out state1, out state2, ref oldManifold, ref manifold );
 
                 FixedArray2<Vector2> points;
                 Vector2 normal;
@@ -184,7 +196,7 @@ namespace FarseerPhysics.DebugView {
                             body.GetTransform( out xf );
 
                             for ( int i = 0; i < polygon.Vertices.Count; i++ ) {
-                                Vector2 tmp = MathUtils.Mul( ref xf, polygon.Vertices[ i ] );
+                                Vector2 tmp = MathUtils.Multiply( ref xf, polygon.Vertices[ i ] );
                                 DrawPoint( tmp, 0.1f, Color.Red );
                             }
                         }
@@ -196,16 +208,34 @@ namespace FarseerPhysics.DebugView {
                     DrawJoint( j );
                 }
             }
+            if ( ( Flags & DebugViewFlags.Pair ) == DebugViewFlags.Pair ) {
+                Color color = new Color( 0.3f, 0.9f, 0.9f );
+                for ( int i = 0; i < World.ContactManager.ContactList.Count; i++ ) {
+                    Contact c = World.ContactManager.ContactList[ i ];
+                    Fixture fixtureA = c.FixtureA;
+                    Fixture fixtureB = c.FixtureB;
+
+                    AABB aabbA;
+                    fixtureA.GetAABB( out aabbA, 0 );
+                    AABB aabbB;
+                    fixtureB.GetAABB( out aabbB, 0 );
+
+                    Vector2 cA = aabbA.Center;
+                    Vector2 cB = aabbB.Center;
+
+                    DrawSegment( cA, cB, color );
+                }
+            }
             if ( ( Flags & DebugViewFlags.AABB ) == DebugViewFlags.AABB ) {
                 Color color = new Color( 0.9f, 0.3f, 0.9f );
                 IBroadPhase bp = World.ContactManager.BroadPhase;
 
-                foreach ( Body body in World.BodyList ) {
-                    if ( body.Enabled == false ) {
+                foreach ( Body b in World.BodyList ) {
+                    if ( b.Enabled == false ) {
                         continue;
                     }
 
-                    foreach ( Fixture f in body.FixtureList ) {
+                    foreach ( Fixture f in b.FixtureList ) {
                         for ( int t = 0; t < f.ProxyCount; ++t ) {
                             FixtureProxy proxy = f.Proxies[ t ];
                             AABB aabb;
@@ -220,7 +250,7 @@ namespace FarseerPhysics.DebugView {
                 foreach ( Body b in World.BodyList ) {
                     Transform xf;
                     b.GetTransform( out xf );
-                    xf.p = b.WorldCenter;
+                    xf.Position = b.WorldCenter;
                     DrawTransform( ref xf );
                 }
             }
@@ -264,11 +294,19 @@ namespace FarseerPhysics.DebugView {
                 // start at last value (newest value added)
                 // continue until no values are left
                 for ( int i = _graphValues.Count - 1; i > 0; i-- ) {
-                    float y1 = PerformancePanelBounds.Bottom - ( ( _graphValues[ i ] / ( MaximumValue - MinimumValue ) ) * yScale );
-                    float y2 = PerformancePanelBounds.Bottom - ( ( _graphValues[ i - 1 ] / ( MaximumValue - MinimumValue ) ) * yScale );
+                    float y1 = PerformancePanelBounds.Bottom -
+                               ( ( _graphValues[ i ] / ( MaximumValue - MinimumValue ) ) * yScale );
+                    float y2 = PerformancePanelBounds.Bottom -
+                               ( ( _graphValues[ i - 1 ] / ( MaximumValue - MinimumValue ) ) * yScale );
 
-                    Vector2 x1 = new Vector2( MathHelper.Clamp( x, PerformancePanelBounds.Left, PerformancePanelBounds.Right ), MathHelper.Clamp( y1, PerformancePanelBounds.Top, PerformancePanelBounds.Bottom ) );
-                    Vector2 x2 = new Vector2( MathHelper.Clamp( x + deltaX, PerformancePanelBounds.Left, PerformancePanelBounds.Right ), MathHelper.Clamp( y2, PerformancePanelBounds.Top, PerformancePanelBounds.Bottom ) );
+                    Vector2 x1 =
+                        new Vector2( MathHelper.Clamp( x, PerformancePanelBounds.Left, PerformancePanelBounds.Right ),
+                                    MathHelper.Clamp( y1, PerformancePanelBounds.Top, PerformancePanelBounds.Bottom ) );
+
+                    Vector2 x2 =
+                        new Vector2(
+                            MathHelper.Clamp( x + deltaX, PerformancePanelBounds.Left, PerformancePanelBounds.Right ),
+                            MathHelper.Clamp( y2, PerformancePanelBounds.Top, PerformancePanelBounds.Bottom ) );
 
                     DrawSegment( x1, x2, Color.LightGreen );
 
@@ -282,9 +320,12 @@ namespace FarseerPhysics.DebugView {
 
             //Draw background.
             _background[ 0 ] = new Vector2( PerformancePanelBounds.X, PerformancePanelBounds.Y );
-            _background[ 1 ] = new Vector2( PerformancePanelBounds.X, PerformancePanelBounds.Y + PerformancePanelBounds.Height );
-            _background[ 2 ] = new Vector2( PerformancePanelBounds.X + PerformancePanelBounds.Width, PerformancePanelBounds.Y + PerformancePanelBounds.Height );
-            _background[ 3 ] = new Vector2( PerformancePanelBounds.X + PerformancePanelBounds.Width, PerformancePanelBounds.Y );
+            _background[ 1 ] = new Vector2( PerformancePanelBounds.X,
+                                         PerformancePanelBounds.Y + PerformancePanelBounds.Height );
+            _background[ 2 ] = new Vector2( PerformancePanelBounds.X + PerformancePanelBounds.Width,
+                                         PerformancePanelBounds.Y + PerformancePanelBounds.Height );
+            _background[ 3 ] = new Vector2( PerformancePanelBounds.X + PerformancePanelBounds.Width,
+                                         PerformancePanelBounds.Y );
 
             DrawSolidPolygon( _background, 4, Color.DarkGray, true );
         }
@@ -304,7 +345,6 @@ namespace FarseerPhysics.DebugView {
                              "\n- Contacts: " + World.ContactList.Count +
                              "\n- Joints: " + World.JointList.Count +
                              "\n- Controllers: " + World.ControllerList.Count +
-                             "\n- Particles: " + World.Fluid.Particles.Count +
                              "\n- Proxies: " + World.ProxyCount );
 
             DrawString( x + 110, y, "Update time:" +
@@ -313,7 +353,6 @@ namespace FarseerPhysics.DebugView {
                                    "\n- CCD: " + World.ContinuousPhysicsTime +
                                    "\n- Joint: " + World.Island.JointUpdateTime +
                                    "\n- Controller: " + World.ControllersUpdateTime +
-                                   "\n- Fluids: " + World.FluidsUpdateTime +
                                    "\n- Total: " + World.UpdateTime );
         }
 
@@ -341,12 +380,12 @@ namespace FarseerPhysics.DebugView {
             // WIP David
             if ( !joint.IsFixedType() ) {
                 b2.GetTransform( out xf2 );
-                x2 = xf2.p;
+                x2 = xf2.Position;
             }
 
             Vector2 p1 = joint.WorldAnchorA;
             Vector2 p2 = joint.WorldAnchorB;
-            Vector2 x1 = xf1.p;
+            Vector2 x1 = xf1.Position;
 
             Color color = new Color( 0.5f, 0.8f, 0.8f );
 
@@ -409,9 +448,9 @@ namespace FarseerPhysics.DebugView {
                 case ShapeType.Circle: {
                         CircleShape circle = (CircleShape) fixture.Shape;
 
-                        Vector2 center = MathUtils.Mul( ref xf, circle.Position );
+                        Vector2 center = MathUtils.Multiply( ref xf, circle.Position );
                         float radius = circle.Radius;
-                        Vector2 axis = MathUtils.Mul( xf.q, new Vector2( 1.0f, 0.0f ) );
+                        Vector2 axis = xf.R.Col1;
 
                         DrawSolidCircle( center, radius, axis, color );
                     }
@@ -423,7 +462,7 @@ namespace FarseerPhysics.DebugView {
                         Debug.Assert( vertexCount <= Settings.MaxPolygonVertices );
 
                         for ( int i = 0; i < vertexCount; ++i ) {
-                            _tempVertices[ i ] = MathUtils.Mul( ref xf, poly.Vertices[ i ] );
+                            _tempVertices[ i ] = MathUtils.Multiply( ref xf, poly.Vertices[ i ] );
                         }
 
                         DrawSolidPolygon( _tempVertices, vertexCount, color );
@@ -433,30 +472,33 @@ namespace FarseerPhysics.DebugView {
 
                 case ShapeType.Edge: {
                         EdgeShape edge = (EdgeShape) fixture.Shape;
-                        Vector2 v1 = MathUtils.Mul( ref xf, edge.Vertex1 );
-                        Vector2 v2 = MathUtils.Mul( ref xf, edge.Vertex2 );
+                        Vector2 v1 = MathUtils.Multiply( ref xf, edge.Vertex1 );
+                        Vector2 v2 = MathUtils.Multiply( ref xf, edge.Vertex2 );
                         DrawSegment( v1, v2, color );
                     }
                     break;
 
-                case ShapeType.Chain: {
-                        ChainShape chain = (ChainShape) fixture.Shape;
+                case ShapeType.Loop: {
+                        LoopShape loop = (LoopShape) fixture.Shape;
+                        int count = loop.Vertices.Count;
 
-                        for ( int i = 0; i < chain.Vertices.Count - 1; ++i ) {
-                            Vector2 v1 = MathUtils.Mul( ref xf, chain.Vertices[ i ] );
-                            Vector2 v2 = MathUtils.Mul( ref xf, chain.Vertices[ i + 1 ] );
+                        Vector2 v1 = MathUtils.Multiply( ref xf, loop.Vertices[ count - 1 ] );
+                        DrawCircle( v1, 0.05f, color );
+                        for ( int i = 0; i < count; ++i ) {
+                            Vector2 v2 = MathUtils.Multiply( ref xf, loop.Vertices[ i ] );
                             DrawSegment( v1, v2, color );
+                            v1 = v2;
                         }
                     }
                     break;
             }
         }
 
-        public override void DrawPolygon ( Vector2[] vertices, int count, float red, float green, float blue, bool closed = true ) {
-            DrawPolygon( vertices, count, new Color( red, green, blue ), closed );
+        public override void DrawPolygon ( Vector2[] vertices, int count, float red, float green, float blue ) {
+            DrawPolygon( vertices, count, new Color( red, green, blue ) );
         }
 
-        public void DrawPolygon ( Vector2[] vertices, int count, Color color, bool closed = true ) {
+        public void DrawPolygon ( Vector2[] vertices, int count, Color color ) {
             if ( !_primitiveBatch.IsReady() ) {
                 throw new InvalidOperationException( "BeginCustomDraw must be called before drawing anything." );
             }
@@ -464,17 +506,20 @@ namespace FarseerPhysics.DebugView {
                 _primitiveBatch.AddVertex( vertices[ i ], color, PrimitiveType.LineList );
                 _primitiveBatch.AddVertex( vertices[ i + 1 ], color, PrimitiveType.LineList );
             }
-            if ( closed ) {
-                _primitiveBatch.AddVertex( vertices[ count - 1 ], color, PrimitiveType.LineList );
-                _primitiveBatch.AddVertex( vertices[ 0 ], color, PrimitiveType.LineList );
-            }
+
+            _primitiveBatch.AddVertex( vertices[ count - 1 ], color, PrimitiveType.LineList );
+            _primitiveBatch.AddVertex( vertices[ 0 ], color, PrimitiveType.LineList );
         }
 
         public override void DrawSolidPolygon ( Vector2[] vertices, int count, float red, float green, float blue ) {
-            DrawSolidPolygon( vertices, count, new Color( red, green, blue ) );
+            DrawSolidPolygon( vertices, count, new Color( red, green, blue ), true );
         }
 
-        public void DrawSolidPolygon ( Vector2[] vertices, int count, Color color, bool outline = true ) {
+        public void DrawSolidPolygon ( Vector2[] vertices, int count, Color color ) {
+            DrawSolidPolygon( vertices, count, color, true );
+        }
+
+        public void DrawSolidPolygon ( Vector2[] vertices, int count, Color color, bool outline ) {
             if ( !_primitiveBatch.IsReady() ) {
                 throw new InvalidOperationException( "BeginCustomDraw must be called before drawing anything." );
             }
@@ -504,7 +549,6 @@ namespace FarseerPhysics.DebugView {
             if ( !_primitiveBatch.IsReady() ) {
                 throw new InvalidOperationException( "BeginCustomDraw must be called before drawing anything." );
             }
-
             const double increment = Math.PI * 2.0 / CircleSegments;
             double theta = 0.0;
 
@@ -521,7 +565,8 @@ namespace FarseerPhysics.DebugView {
             }
         }
 
-        public override void DrawSolidCircle ( Vector2 center, float radius, Vector2 axis, float red, float green, float blue ) {
+        public override void DrawSolidCircle ( Vector2 center, float radius, Vector2 axis, float red, float green,
+                                             float blue ) {
             DrawSolidCircle( center, radius, axis, new Color( red, green, blue ) );
         }
 
@@ -568,12 +613,12 @@ namespace FarseerPhysics.DebugView {
 
         public override void DrawTransform ( ref Transform transform ) {
             const float axisScale = 0.4f;
-            Vector2 p1 = transform.p;
+            Vector2 p1 = transform.Position;
 
-            Vector2 p2 = p1 + axisScale * transform.q.GetXAxis();
+            Vector2 p2 = p1 + axisScale * transform.R.Col1;
             DrawSegment( p1, p2, Color.Red );
 
-            p2 = p1 + axisScale * transform.q.GetYAxis();
+            p2 = p1 + axisScale * transform.R.Col2;
             DrawSegment( p1, p2, Color.Green );
         }
 
@@ -588,15 +633,12 @@ namespace FarseerPhysics.DebugView {
             DrawSolidPolygon( verts, 4, color, true );
         }
 
-        public void DrawString ( int x, int y, string text ) {
-            DrawString( new Vector2( x, y ), text );
+        public void DrawString ( int x, int y, string s, params object[] args ) {
+            _stringData.Add( new StringData( x, y, s, args, TextColor ) );
         }
 
-        public void DrawString ( Vector2 position, string text ) {
-            _stringData.Add( new StringData( position, text, TextColor ) );
-        }
-
-        public void DrawArrow ( Vector2 start, Vector2 end, float length, float width, bool drawStartIndicator, Color color ) {
+        public void DrawArrow ( Vector2 start, Vector2 end, float length, float width, bool drawStartIndicator,
+                              Color color ) {
             // Draw connection segment between start- and end-point
             DrawSegment( start, end, color );
 
@@ -647,17 +689,10 @@ namespace FarseerPhysics.DebugView {
             }
         }
 
-        public void BeginCustomDraw ( ref Matrix projection, ref Matrix view ) {
-            _primitiveBatch.Begin( ref projection, ref view );
-        }
-
-        public void EndCustomDraw () {
-            _primitiveBatch.End();
-        }
-
         public void RenderDebugData ( ref Matrix projection, ref Matrix view ) {
-            if ( !Enabled )
+            if ( !Enabled ) {
                 return;
+            }
 
             //Nothing is enabled - don't draw the debug view.
             if ( Flags == 0 )
@@ -681,9 +716,11 @@ namespace FarseerPhysics.DebugView {
 
             // draw any strings we have
             for ( int i = 0; i < _stringData.Count; i++ ) {
-                _batch.DrawString( _font, _stringData[ i ].Text, _stringData[ i ].Position, _stringData[ i ].Color );
+                _batch.DrawString( _font, string.Format( _stringData[ i ].S, _stringData[ i ].Args ),
+                                  new Vector2( _stringData[ i ].X + 1f, _stringData[ i ].Y + 1f ), Color.Black );
+                _batch.DrawString( _font, string.Format( _stringData[ i ].S, _stringData[ i ].Args ),
+                                  new Vector2( _stringData[ i ].X, _stringData[ i ].Y ), _stringData[ i ].Color );
             }
-
             // end the sprite batch effect
             _batch.End();
 
@@ -691,9 +728,9 @@ namespace FarseerPhysics.DebugView {
         }
 
         public void RenderDebugData ( ref Matrix projection ) {
-            if ( !Enabled )
+            if ( !Enabled ) {
                 return;
-
+            }
             Matrix view = Matrix.Identity;
             RenderDebugData( ref projection, ref view );
         }
@@ -703,10 +740,11 @@ namespace FarseerPhysics.DebugView {
             _device = device;
             _batch = new SpriteBatch( _device );
             _primitiveBatch = new PrimitiveBatch( _device, 1000 );
-            _font = ContentWrapper.GetFont( "fpsfont" );
+            _font = ContentHelper.GetFont( "fpsfont" );
             _stringData = new List<StringData>();
 
-            _localProjection = Matrix.CreateOrthographicOffCenter( 0f, _device.Viewport.Width, _device.Viewport.Height, 0f, 0f, 1f );
+            _localProjection = Matrix.CreateOrthographicOffCenter( 0f, _device.Viewport.Width, _device.Viewport.Height,
+                                                                  0f, 0f, 1f );
             _localView = Matrix.Identity;
         }
 
@@ -723,13 +761,16 @@ namespace FarseerPhysics.DebugView {
         #region Nested type: StringData
 
         private struct StringData {
+            public object[] Args;
             public Color Color;
-            public string Text;
-            public Vector2 Position;
+            public string S;
+            public int X, Y;
 
-            public StringData ( Vector2 position, string text, Color color ) {
-                Position = position;
-                Text = text;
+            public StringData ( int x, int y, string s, object[] args, Color color ) {
+                X = x;
+                Y = y;
+                S = s;
+                Args = args;
                 Color = color;
             }
         }

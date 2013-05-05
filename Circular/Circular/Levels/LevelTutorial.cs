@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using Circular.Display;
+using Circular.Entity;
 using Circular.Helpers;
 using Circular.Utils;
 using FarseerPhysics;
@@ -10,66 +11,53 @@ using FarseerPhysics.Common;
 using FarseerPhysics.Dynamics;
 using FarseerPhysics.Dynamics.Joints;
 using FarseerPhysics.Factories;
-using Circular.Display;
-using Circular.Entity;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace Circular.Levels {
-    public class Level1 : LevelBase {
-
+    internal class LevelTutorial : LevelBase {
         private float _acceleration;
         private Body _board;
-        private TextureSprite _box;
+        private PrimitiveSprite _box;
         private List<Body> _boxes;
 
-        private TextureSprite _bridge;
+        private PrimitiveSprite _bridge;
         private List<Body> _bridgeSegments;
         private Body _car;
-        private TextureSprite _carBody;
+        private PrimitiveSprite _carBody;
         private Body _ground;
         private float _hzBack;
         private float _hzFront;
         private float _maxSpeed;
 
-        private WheelJoint _springBack;
-        private WheelJoint _springFront;
-        private TextureSprite _teeter;
-        private TextureSprite _wheel;
+        private float _scale;
+        private LineJoint _springBack;
+        private LineJoint _springFront;
+        private PrimitiveSprite _teeter;
+        private PrimitiveSprite _wheel;
         private Body _wheelBack;
         private Body _wheelFront;
         private float _zeta;
 
-        private ParallaxingBackgrounds bg;
+        #region IDemoScreen Members
 
-        #region Demo description
         public override string GetTitle () {
             return "Tutorial";
         }
 
         public override string GetDetails () {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine( "This demo shows a side scrolling car on a race track." );
-            sb.AppendLine( "The car uses two wheel joints, which combine a revolute and" );
-            sb.AppendLine( "a (soft) distance joint for the tire suspension." );
-            sb.AppendLine( "The track is composed of several edge shapes and different" );
-            sb.AppendLine( "obstacles are attached to the track." );
-            sb.AppendLine();
+            sb.AppendLine( "TODO: Add sample description!" );
+            sb.AppendLine( string.Empty );
             sb.AppendLine( "GamePad:" );
-            sb.AppendLine( "  - Accelerate / reverse: Left thumbstick" );
-            sb.AppendLine( "  - Break: A button" );
-            sb.Append( "  - Exit to demo selection: Back button" );
-#if WINDOWS
-            sb.AppendLine();
-            sb.AppendLine();
+            sb.AppendLine( "  - Exit to menu: Back button" );
+            sb.AppendLine( string.Empty );
             sb.AppendLine( "Keyboard:" );
-            sb.AppendLine( "  - Accelerate / reverse: D / A" );
-            sb.AppendLine( "  - Break: S" );
-            sb.Append( "  - Exit to demo selection: Escape" );
-#endif
+            sb.AppendLine( "  - Exit to menu: Escape" );
             return sb.ToString();
         }
+
         #endregion
 
         public override void LoadContent () {
@@ -79,14 +67,18 @@ namespace Circular.Levels {
 
             HasCursor = false;
             EnableCameraControl = true;
+            HasVirtualStick = true;
 
             _hzFront = 8.5f;
             _hzBack = 5.0f;
-            _zeta = 1f;
+            _zeta = 0.85f;
             _maxSpeed = 50.0f;
 
-            bg = new ParallaxingBackgrounds( Framework );
-            bg.Init();
+#if WINDOWS_PHONE
+            _scale = 2f / 3f;
+#else
+            _scale = 1f;
+#endif
 
             // terrain
             _ground = new Body( World );
@@ -131,7 +123,7 @@ namespace Circular.Levels {
                     FixtureFactory.AttachEdge( terrain[ i ], terrain[ i + 1 ], _ground );
                 }
 
-                _ground.Friction = 1f;
+                _ground.Friction = 0.6f;
             }
 
             // teeter board
@@ -141,8 +133,9 @@ namespace Circular.Levels {
                 _board.Position = new Vector2( 140.0f, -1.0f );
 
                 PolygonShape box = new PolygonShape( 1f );
-                box.Vertices = PolygonTools.CreateRectangle( 10.0f, 0.25f );
-                _teeter = new TextureSprite( Framework, ContentWrapper.TextureFromShape( box, "stripe", ContentWrapper.Gold, ContentWrapper.Black, ContentWrapper.Black, 1f ) );
+                box.SetAsBox( 10.0f, 0.25f );
+                _teeter =
+                    new PrimitiveSprite( ScreenManager.Assets.TextureFromShape( box, MaterialType.Pavement, Color.LightGray, 1.2f ) );
 
                 _board.CreateFixture( box );
 
@@ -161,9 +154,9 @@ namespace Circular.Levels {
 
                 const int segmentCount = 20;
                 PolygonShape shape = new PolygonShape( 1f );
-                shape.Vertices = PolygonTools.CreateRectangle( 1.0f, 0.125f );
-
-                _bridge = new TextureSprite( Framework, ContentWrapper.TextureFromShape( shape, ContentWrapper.Gold, ContentWrapper.Black ) );
+                shape.SetAsBox( 1.0f, 0.125f );
+                _bridge =
+                    new PrimitiveSprite( ScreenManager.Assets.TextureFromShape( shape, MaterialType.Dots, Color.SandyBrown, 1f ) );
 
                 Body prevBody = _ground;
                 for ( int i = 0; i < segmentCount; ++i ) {
@@ -184,8 +177,9 @@ namespace Circular.Levels {
             {
                 _boxes = new List<Body>();
                 PolygonShape box = new PolygonShape( 1f );
-                box.Vertices = PolygonTools.CreateRectangle( 0.5f, 0.5f );
-                _box = new TextureSprite( Framework, ContentWrapper.TextureFromShape( box, "square", ContentWrapper.Sky, ContentWrapper.Sunset, ContentWrapper.Black, 1f ) );
+                box.SetAsBox( 0.5f, 0.5f );
+                _box =
+                    new PrimitiveSprite( ScreenManager.Assets.TextureFromShape( box, MaterialType.Squares, Color.SaddleBrown, 2f ) );
 
                 Body body = new Body( World );
                 body.BodyType = BodyType.Dynamic;
@@ -218,7 +212,7 @@ namespace Circular.Levels {
                 vertices.Add( new Vector2( 2.3f, 0.33f ) );
                 vertices.Add( new Vector2( -2.25f, 0.35f ) );
 
-                PolygonShape chassis = new PolygonShape( vertices, 1f );
+                PolygonShape chassis = new PolygonShape( vertices, 2f );
 
                 _car = new Body( World );
                 _car.BodyType = BodyType.Dynamic;
@@ -228,8 +222,8 @@ namespace Circular.Levels {
                 _wheelBack = new Body( World );
                 _wheelBack.BodyType = BodyType.Dynamic;
                 _wheelBack.Position = new Vector2( -1.709f, -0.78f );
-                Fixture fix = _wheelBack.CreateFixture( new CircleShape( 0.5f, 1f ) );
-                fix.Friction = 3f;
+                Fixture fix = _wheelBack.CreateFixture( new CircleShape( 0.5f, 0.8f ) );
+                fix.Friction = 0.9f;
 
                 _wheelFront = new Body( World );
                 _wheelFront.BodyType = BodyType.Dynamic;
@@ -237,51 +231,54 @@ namespace Circular.Levels {
                 _wheelFront.CreateFixture( new CircleShape( 0.5f, 1f ) );
 
                 Vector2 axis = new Vector2( 0.0f, -1.2f );
-                _springBack = new WheelJoint( _car, _wheelBack, _wheelBack.Position, axis );
+                _springBack = new LineJoint( _car, _wheelBack, _wheelBack.Position, axis );
                 _springBack.MotorSpeed = 0.0f;
-                _springBack.MaxMotorTorque = 40.0f;
+                _springBack.MaxMotorTorque = 20.0f;
                 _springBack.MotorEnabled = true;
-                _springBack.SpringFrequencyHz = _hzBack;
-                _springBack.SpringDampingRatio = _zeta;
+                _springBack.Frequency = _hzBack;
+                _springBack.DampingRatio = _zeta;
                 World.AddJoint( _springBack );
 
-                _springFront = new WheelJoint( _car, _wheelFront, _wheelFront.Position, axis );
+                _springFront = new LineJoint( _car, _wheelFront, _wheelFront.Position, axis );
                 _springFront.MotorSpeed = 0.0f;
-                _springFront.MaxMotorTorque = 20.0f;
+                _springFront.MaxMotorTorque = 10.0f;
                 _springFront.MotorEnabled = false;
-                _springFront.SpringFrequencyHz = _hzFront;
-                _springFront.SpringDampingRatio = _zeta;
+                _springFront.Frequency = _hzFront;
+                _springFront.DampingRatio = _zeta;
                 World.AddJoint( _springFront );
 
-                // GFX
-
-                _carBody = new TextureSprite( Framework, ContentWrapper.GetTexture( "car" ), ContentWrapper.CalculateOrigin( _car ) );
-                _wheel = new TextureSprite( Framework, ContentWrapper.GetTexture( "wheel" ) );
+                _carBody = new PrimitiveSprite( ContentHelper.GetTexture( "car" ),
+                                      AssetCreator.CalculateOrigin( _car ) / _scale );
+                _wheel = new PrimitiveSprite( ContentHelper.GetTexture( "wheel" ) );
             }
 
-            Framework.Camera.MinRotation = -0.05f;
-            Framework.Camera.MaxRotation = 0.05f;
+            Camera.MinRotation = -0.05f;
+            Camera.MaxRotation = 0.05f;
 
-            Framework.Camera.TrackingBody = _car;
-            Framework.Camera.EnableTracking = true;
+            Camera.TrackingBody = _car;
+            Camera.EnableTracking = true;
         }
 
         public override void Update ( GameTime gameTime, bool otherScreenHasFocus, bool coveredByOtherScreen ) {
-            bg.Update( gameTime );
             _springBack.MotorSpeed = Math.Sign( _acceleration ) *
                                      MathHelper.SmoothStep( 0f, _maxSpeed, Math.Abs( _acceleration ) );
-            _springBack.MotorEnabled = !( Math.Abs( _springBack.MotorSpeed ) < _maxSpeed * 0.06f );
+            if ( Math.Abs( _springBack.MotorSpeed ) < _maxSpeed * 0.06f ) {
+                _springBack.MotorEnabled = false;
+            }
+            else {
+                _springBack.MotorEnabled = true;
+            }
             base.Update( gameTime, otherScreenHasFocus, coveredByOtherScreen );
         }
 
         public override void HandleInput ( InputHelper input, GameTime gameTime ) {
-            if ( input.GamePadState.ThumbSticks.Left.X > 0.5f || input.KeyboardState.IsKeyDown( Keys.D ) ) {
+            if ( input.VirtualState.ThumbSticks.Left.X > 0.5f ) {
                 _acceleration = Math.Min( _acceleration + (float) ( 2.0 * gameTime.ElapsedGameTime.TotalSeconds ), 1f );
             }
-            else if ( input.GamePadState.ThumbSticks.Left.X < -0.5f || input.KeyboardState.IsKeyDown( Keys.A ) ) {
+            else if ( input.VirtualState.ThumbSticks.Left.X < -0.5f ) {
                 _acceleration = Math.Max( _acceleration - (float) ( 2.0 * gameTime.ElapsedGameTime.TotalSeconds ), -1f );
             }
-            else if ( input.IsNewButtonPress( Buttons.A ) || input.IsNewKeyRelease( Keys.S ) ) {
+            else if ( input.VirtualState.Buttons.A == ButtonState.Pressed ) {
                 _acceleration = 0f;
             }
             else {
@@ -292,35 +289,41 @@ namespace Circular.Levels {
         }
 
         public override void Draw ( GameTime gameTime ) {
-            bg.Draw( gameTime );
-
-            Sprites.Begin( 0, null, null, null, null, null, Camera.View );
+            ScreenManager.SpriteBatch.Begin( 0, null, null, null, null, null, Camera.View );
             // draw car
-            Sprites.Draw( _wheel.Image, ConvertUnits.ToDisplayUnits( _wheelBack.Position ), null, Color.White, _wheelBack.Rotation, _wheel.Origin, 1f, SpriteEffects.None, 0f );
-            Sprites.Draw( _wheel.Image, ConvertUnits.ToDisplayUnits( _wheelFront.Position ), null, Color.White, _wheelFront.Rotation, _wheel.Origin, 1f, SpriteEffects.None, 0f );
-            Sprites.Draw( _carBody.Image, ConvertUnits.ToDisplayUnits( _car.Position ), null, Color.White, _car.Rotation, _carBody.Origin, 1f, SpriteEffects.None, 0f );
+            ScreenManager.SpriteBatch.Draw( _wheel.Texture, ConvertUnits.ToDisplayUnits( _wheelBack.Position ), null,
+                                           Color.White, _wheelBack.Rotation, _wheel.Origin, _scale, SpriteEffects.None,
+                                           0f );
+            ScreenManager.SpriteBatch.Draw( _wheel.Texture, ConvertUnits.ToDisplayUnits( _wheelFront.Position ), null,
+                                           Color.White, _wheelFront.Rotation, _wheel.Origin, _scale, SpriteEffects.None,
+                                           0f );
+            ScreenManager.SpriteBatch.Draw( _carBody.Texture, ConvertUnits.ToDisplayUnits( _car.Position ), null,
+                                           Color.White, _car.Rotation, _carBody.Origin, _scale, SpriteEffects.None, 0f );
             // draw teeter
-            Sprites.Draw( _teeter.Image, ConvertUnits.ToDisplayUnits( _board.Position ), null, Color.White, _board.Rotation, _teeter.Origin, 1f, SpriteEffects.None, 0f );
+            ScreenManager.SpriteBatch.Draw( _teeter.Texture, ConvertUnits.ToDisplayUnits( _board.Position ), null,
+                                           Color.White, _board.Rotation, _teeter.Origin, 1f, SpriteEffects.None, 0f );
             // draw bridge
             for ( int i = 0; i < _bridgeSegments.Count; ++i ) {
-                Sprites.Draw( _bridge.Image, ConvertUnits.ToDisplayUnits( _bridgeSegments[ i ].Position ), null, Color.White, _bridgeSegments[ i ].Rotation, _bridge.Origin, 1f, SpriteEffects.None, 0f );
+                ScreenManager.SpriteBatch.Draw( _bridge.Texture, ConvertUnits.ToDisplayUnits( _bridgeSegments[ i ].Position ),
+                                               null,
+                                               Color.White, _bridgeSegments[ i ].Rotation, _bridge.Origin, 1f,
+                                               SpriteEffects.None, 0f );
             }
             // draw boxes
             for ( int i = 0; i < _boxes.Count; ++i ) {
-                Sprites.Draw( _box.Image, ConvertUnits.ToDisplayUnits( _boxes[ i ].Position ), null, Color.White, _boxes[ i ].Rotation, _box.Origin, 1f, SpriteEffects.None, 0f );
+                ScreenManager.SpriteBatch.Draw( _box.Texture, ConvertUnits.ToDisplayUnits( _boxes[ i ].Position ), null,
+                                               Color.White, _boxes[ i ].Rotation, _box.Origin, 1f, SpriteEffects.None, 0f );
             }
 
             // draw ground
             for ( int i = 0; i < _ground.FixtureList.Count; ++i ) {
-                Lines.DrawLineShape( Sprites, _ground.FixtureList[ i ].Shape, Color.Purple, 7 );
+                ScreenManager.LineBatch.DrawLineShape( ScreenManager.SpriteBatch, _ground.FixtureList[ i ].Shape, Color.Black, 3 );
             }
 
-            Sprites.End();
+            ScreenManager.SpriteBatch.End();
 
-            
+
             base.Draw( gameTime );
         }
-
-
     }
 }

@@ -1,165 +1,165 @@
 ﻿using System;
-using Circular.Levels;
+using Circular.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Circular.Display.Screens
-{
+namespace Circular.Display.Screens {
+    public enum EntryType {
+        Screen,
+        Separator,
+        ExitItem
+    }
+
     /// <summary>
-    /// Helper class represents a single entry in a MenuScreen.
+    /// Helper class represents a single entry in a MenuScreen. By default this
+    /// just draws the entry text string, but it can be customized to display menu
+    /// entries in different ways. This also provides an event that will be raised
+    /// when the menu entry is selected.
     /// </summary>
-    public sealed class MenuEntry : IComparable
-    {
-        private const float MaxTranslation = 10f;
-        private const double HighlightTime = 0.3;
-        private const double FadeTime = 0.4;
+    public sealed class MenuEntry {
+        private float _alpha;
+        private Vector2 _baseOrigin;
 
-        private static float _targetHiddenX;
-        private static float _targetVisibleX;
+        private float _height;
+        private MenuScreen _menu;
 
-        private float _targetY;
-        private Vector2 _currentPosition;
-        private Vector2 _size;
-        private Color _color;
-        private Color _textColor;
+        /// <summary>
+        /// The position at which the entry is drawn. This is set by the MenuScreen
+        /// each frame in Update.
+        /// </summary>
+        private Vector2 _position;
 
-        private LevelBase _screen;
-        private Texture2D _preview;
-        private bool _visible;
+        private float _scale;
+        private GameScreen _screen;
 
-        private double _hoverFade;
-        private double _selectionFade;
-        private double _visibleFade;
+        /// <summary>
+        /// Tracks a fading selection effect on the entry.
+        /// </summary>
+        /// <remarks>
+        /// The entries transition out of the selection effect when they are deselected.
+        /// </remarks>
+        private float _selectionFade;
 
+        /// <summary>
+        /// The text rendered for this entry.
+        /// </summary>
         private string _text;
+
+        private EntryType _type;
+        private float _width;
+
+        public bool IsSelected, IsHovered;
+
+
+        public Texture2D Preview { get; set; }
 
         /// <summary>
         /// Constructs a new menu entry with the specified text.
         /// </summary>
-        public MenuEntry(string text, LevelBase screen, Texture2D preview)
-        {
+        public MenuEntry ( MenuScreen menu, string text, EntryType type, GameScreen screen, Texture2D preview ) {
             _text = text;
             _screen = screen;
-            _preview = preview;
-
-            _hoverFade = 0.0;
-            _selectionFade = 0.0;
-
-            SpriteFont font = ContentWrapper.GetFont("fpsfont");
-            _size = font.MeasureString(text);
-        }
-
-        public static void InitializeEntries(float hiddenX, float visibleX)
-        {
-            _targetHiddenX = hiddenX;
-            _targetVisibleX = visibleX;
-        }
-
-        public void InitializePosition(float target, bool visible)
-        {
-            _visible = visible;
-            _visibleFade = visible ? 1.0 : 0.0;
-            _currentPosition.X = visible ? _targetVisibleX : _targetHiddenX;
-            _currentPosition.Y = _targetY = target;
-        }
-
-        public string Text
-        {
-            get { return _text; }
-        }
-
-        public Vector2 Position
-        {
-            get { return _currentPosition; }
-        }
-
-        public float Target
-        {
-            set { _targetY = value; }
-        }
-
-        public Vector2 Origin
-        {
-            get { return _size / 2f; }
-        }
-
-        public Vector2 Size
-        {
-            get { return _size; }
-        }
-
-        public float Fade
-        {
-            get { return (float)_selectionFade; }
-        }
-
-        public GameScreen Screen
-        {
-            get { return _screen; }
-        }
-
-        public Texture2D Preview
-        {
-            get { return _preview; }
-        }
-
-        public Color TextColor
-        {
-            get { return _textColor; }
-        }
-
-        public Color TileColor
-        {
-            get { return _color; }
-        }
-
-        public float Scale
-        {
-            get { return 0.9f + 0.1f * (float)_hoverFade; }
-        }
-
-        public bool Visible
-        {
-            get { return _visible; }
-            set { _visible = value; }
-        }
-
-        public float Alpha
-        {
-            get { return (float)_visibleFade; }
+            _type = type;
+            _menu = menu;
+            _scale = 0.9f;
+            _alpha = 1.0f;
+            Preview = preview;
         }
 
         /// <summary>
+        /// Constructs a new menu entry with the specified text.
+        /// </summary>
+        public MenuEntry ( MenuScreen menu, string text, EntryType type, GameScreen screen )
+            : this( menu, text, type, screen, null ) {
+        }
+
+
+        /// <summary>
+        /// Gets or sets the text of this menu entry.
+        /// </summary>
+        public string Text {
+            get { return _text; }
+            set { _text = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the position at which to draw this menu entry.
+        /// </summary>
+        public Vector2 Position {
+            get { return _position; }
+            set { _position = value; }
+        }
+
+        public float Alpha {
+            get { return _alpha; }
+            set { _alpha = value; }
+        }
+
+        public GameScreen Screen {
+            get { return _screen; }
+        }
+
+        public void Initialize () {
+            SpriteFont font = ContentHelper.GetFont( "menufont" );
+
+            _baseOrigin = new Vector2( font.MeasureString( Text ).X, font.MeasureString( "|" ).Y ) * 0.5f;
+
+            _width = font.MeasureString( Text ).X * 0.8f;
+            _height = font.MeasureString( "|" ).Y * 0.8f;
+        }
+
+        public bool IsExitItem () {
+            return _type == EntryType.ExitItem;
+        }
+
+        public bool IsSelectable () {
+            return _type != EntryType.Separator;
+        }
+        
+        /// <summary>
         /// Updates the menu entry.
         /// </summary>
-        public void Update(bool isSelected, bool isHovered, GameTime gameTime)
-        {
-            _hoverFade = isHovered ? Math.Min(_hoverFade + (gameTime.ElapsedGameTime.TotalSeconds / HighlightTime), 1.0) : Math.Max(_hoverFade - (gameTime.ElapsedGameTime.TotalSeconds / HighlightTime), 0.0);
-            _selectionFade = isSelected ? Math.Min(_selectionFade + (gameTime.ElapsedGameTime.TotalSeconds / HighlightTime), 1.0) : Math.Max(_selectionFade - (gameTime.ElapsedGameTime.TotalSeconds / HighlightTime), 0.0);
+        public void Update ( GameTime gameTime ) {
 
-            _textColor = Color.Lerp(ContentWrapper.Beige, ContentWrapper.Gold, (float)_selectionFade);
-            _color = Color.Lerp(ContentWrapper.Sky * 0.6f, ContentWrapper.Grey * 0.6f, (float)Math.Max(_selectionFade, _hoverFade));
-
-            _visibleFade = _visible ? Math.Min(_visibleFade + (gameTime.ElapsedGameTime.TotalSeconds / FadeTime), 1.0) : Math.Max(_visibleFade - (gameTime.ElapsedGameTime.TotalSeconds / FadeTime), 0.0);
-            _currentPosition.X = MathHelper.SmoothStep(_targetHiddenX, _targetVisibleX, (float)_visibleFade);
-
-            float deltaY = _targetY - _currentPosition.Y;
-            if (Math.Abs(deltaY) > MaxTranslation)
-            {
-                _currentPosition.Y += MaxTranslation * Math.Sign(deltaY);
-            }
-            else
-            {
-                _currentPosition.Y += deltaY;
+            // When the menu selection changes, entries gradually fade between
+            // their selected and deselected appearance, rather than instantly
+            // popping to the new state.
+            if ( _type != EntryType.Separator ) {
+                float fadeSpeed = (float) gameTime.ElapsedGameTime.TotalSeconds * 4;
+                _selectionFade = IsSelected || IsHovered ? Math.Min( _selectionFade + fadeSpeed, 1f ) : Math.Max( _selectionFade - fadeSpeed, 0f );
+                _scale = 0.7f + 0.1f * _selectionFade;
             }
         }
 
-        #region IComparable Members
-        public int CompareTo(object obj)
-        {
-            MenuEntry entry = obj as MenuEntry;
-            return entry == null ? 0 : System.String.Compare(_screen.GetType().ToString(), entry._screen.GetType().ToString(), System.StringComparison.Ordinal);
+        /// <summary>
+        /// Draws the menu entry. This can be overridden to customize the appearance.
+        /// </summary>
+        public void Draw () {
+            SpriteFont font = ContentHelper.GetFont( "menufont" );
+            SpriteBatch batch = _menu.ScreenManager.SpriteBatch;
+
+            Color color = _type == EntryType.Separator ? Color.DarkOrange : Color.Lerp( Color.White, new Color( 255, 210, 0 ), _selectionFade );
+            color *= _alpha;
+
+            // Draw text, centered on the middle of each line.
+            batch.DrawString( font, _text, _position - _baseOrigin * _scale + Vector2.One,
+                              Color.DarkSlateGray * _alpha * _alpha, 0, Vector2.Zero, _scale, SpriteEffects.None, 0 );
+            batch.DrawString( font, _text, _position - _baseOrigin * _scale, color, 0, Vector2.Zero, _scale,
+                              SpriteEffects.None, 0 );
         }
-        #endregion
+
+        /// <summary>
+        /// Queries how much space this menu entry requires.
+        /// </summary>
+        public int GetHeight () {
+            return (int) _height;
+        }
+
+        /// <summary>
+        /// Queries how wide the entry is, used for centering on the screen.
+        /// </summary>
+        public int GetWidth () {
+            return (int) _width;
+        }
     }
 }

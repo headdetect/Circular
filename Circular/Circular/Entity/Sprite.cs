@@ -1,17 +1,17 @@
 ﻿using System;
+using Circular.Managers;
 using Circular.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
 namespace Circular.Entity {
 
-
-    public abstract class Sprite : IComparable {
+    public class Sprite : IComparable {
 
         /// <summary>
         /// Gets the flux game.
         /// </summary>
-        protected CircularGame Game { get; private set; }
+        protected ScreenManager Manager { get; private set; }
 
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Circular.Entity {
         /// <value>
         /// The position.
         /// </value>
-        public abstract Vector2 Position { get; set; }
+        public virtual Vector2 Position { get; set; }
 
         /// <summary>
         /// Gets or sets the size.
@@ -72,7 +72,7 @@ namespace Circular.Entity {
         /// <value>
         /// The rotation.
         /// </value>
-        public abstract float Rotation { get; set; }
+        public virtual float Rotation { get; set; }
 
         /// <summary>
         /// Gets or sets the index of the Z vert.
@@ -103,19 +103,19 @@ namespace Circular.Entity {
         /// <summary>
         /// Initializes a new empty instance of the <see cref="Sprite"/> class.
         /// </summary>
-        /// <param name="fluxGame">The flux game.</param>
-        protected Sprite ( CircularGame fluxGame ) {
-            this.Game = fluxGame;
+        /// <param name="manager">The screen manager.</param>
+        protected Sprite ( ScreenManager manager ) {
+            this.Manager = manager;
             this.Visible = true;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Sprite"/> class.
         /// </summary>
-        /// <param name="fluxGame">The flux game.</param>
+        /// <param name="manager">The flux game.</param>
         /// <param name="size">The size.</param>
-        protected Sprite ( CircularGame fluxGame, Vector2 size ) {
-            this.Game = fluxGame;
+        public Sprite ( ScreenManager manager, Vector2 size ) {
+            this.Manager = manager;
             this.Size = size;
             this.Visible = true;
         }
@@ -123,11 +123,11 @@ namespace Circular.Entity {
         /// <summary>
         /// Initializes a new instance of the <see cref="Sprite"/> class.
         /// </summary>
-        /// <param name="fluxGame">The flux game.</param>
+        /// <param name="manager">The flux game.</param>
         /// <param name="size">The size.</param>
         /// <param name="position">The position.</param>
-        protected Sprite ( CircularGame fluxGame, Vector2 size, Vector2 position ) {
-            this.Game = fluxGame;
+        public Sprite ( ScreenManager manager, Vector2 size, Vector2 position ) {
+            this.Manager = manager;
             this.Size = size;
             this.Position = position;
             this.Visible = true;
@@ -140,7 +140,7 @@ namespace Circular.Entity {
         /// </summary>
         public virtual void Draw ( GameTime gameTime ) {
             if ( Visible )
-                Game.SpriteBatch.Draw( Texture, Position, null, Color.White, Convert.ToSingle( Rotation * ( Math.PI / 180 ) ), Origin, ZoomScale, SpriteEffect, ZIndex );
+                Manager.SpriteBatch.Draw( Texture, Position, null, Color.White, Convert.ToSingle( Rotation * ( Math.PI / 180 ) ), Origin, ZoomScale, SpriteEffect, ZIndex );
         }
 
 
@@ -148,18 +148,18 @@ namespace Circular.Entity {
         /// <summary>
         /// Updates this instance.
         /// </summary>
-        public abstract void Update ( GameTime gameTime );
+        public virtual void Update ( GameTime gameTime ) { }
 
         /// <summary>
         /// Inits this instance.
         /// </summary>
-        public abstract void Init ();
+        public virtual void Init () {}
 
         /// <summary>
         /// Destroys the specified sprite.
         /// </summary>
         /// <param name="animation">if set to <c>true</c> animation SHOULD be shown.</param>
-        public abstract void Destroy ( bool animation );
+        public virtual void Destroy ( bool animation ) {}
 
         #region Utils
 

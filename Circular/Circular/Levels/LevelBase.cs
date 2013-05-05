@@ -1,21 +1,15 @@
 ﻿using System;
 using Circular.Display;
-using Circular.Display.Screens;
 using Circular.Helpers;
 using FarseerPhysics;
-using FarseerPhysics.DebugView;
 using FarseerPhysics.Dynamics;
 using FarseerPhysics.Dynamics.Joints;
-using Circular.Display;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace Circular.Levels {
-    public class LevelBase : GameScreen {
-        private static bool _renderDebug;
-        private static DebugViewFlags _flags = DebugViewFlags.PerformanceGraph | DebugViewFlags.DebugPanel;
-        private static bool _flagsChanged;
+    public abstract class LevelBase : GameScreen {
+
 
         public Camera Camera;
         protected DebugViewXNA DebugView;
@@ -26,18 +20,8 @@ namespace Circular.Levels {
         private FixedMouseJoint _fixedMouseJoint;
         private Body _userAgent;
 
-        public static DebugViewFlags Flags {
-            get { return _flags; }
-            set {
-                _flags = value;
-                _flagsChanged = true;
-            }
-        }
-
-        public static bool RenderDebug {
-            get { return _renderDebug; }
-            set { _renderDebug = value; }
-        }
+        public abstract string GetTitle ();
+        public abstract string GetDetails ();
 
         protected LevelBase () {
             TransitionOnTime = TimeSpan.FromSeconds( 0.75 );
@@ -59,6 +43,11 @@ namespace Circular.Levels {
         }
 
         public override void LoadContent () {
+            base.LoadContent();
+
+            //We enable diagnostics to show get values for our performance counters.
+            Settings.EnableDiagnostics = true;
+
             if ( World == null ) {
                 World = new World( Vector2.Zero );
             }
@@ -68,21 +57,22 @@ namespace Circular.Levels {
 
             if ( DebugView == null ) {
                 DebugView = new DebugViewXNA( World );
+                DebugView.RemoveFlags( DebugViewFlags.Shape );
+                DebugView.RemoveFlags( DebugViewFlags.Joint );
                 DebugView.DefaultShapeColor = Color.White;
                 DebugView.SleepingShapeColor = Color.LightGray;
-                DebugView.LoadContent( Framework.GraphicsDevice, Framework.Content );
+                DebugView.LoadContent( ScreenManager.GraphicsDevice, ScreenManager.Content );
             }
-            DebugView.Flags = _flags;
-            _flagsChanged = false;
 
             if ( Camera == null ) {
-                Camera = Framework.Camera;
+                Camera = new Camera( ScreenManager.GraphicsDevice );
             }
             else {
                 Camera.ResetCamera();
             }
 
-            base.LoadContent();
+            // Loading may take a while... so prevent the game from "catching up" once we finished loading
+            ScreenManager.Game.ResetElapsedTime();
         }
 
         public override void Update ( GameTime gameTime, bool otherScreenHasFocus, bool coveredByOtherScreen ) {
@@ -98,11 +88,45 @@ namespace Circular.Levels {
         }
 
         public override void HandleInput ( InputHelper input, GameTime gameTime ) {
-            if ( input.IsNewButtonPress( Buttons.Start ) || input.IsNewKeyPress( Keys.F1 ) ) {
-                Framework.AddScreen( new DescriptionBoxScreen( GetDetails() ) );
+            // Control debug view
+            if ( input.IsNewButtonPress( Buttons.Start ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Shape );
+                EnableOrDisableFlag( DebugViewFlags.DebugPanel );
+                EnableOrDisableFlag( DebugViewFlags.PerformanceGraph );
+                EnableOrDisableFlag( DebugViewFlags.Joint );
+                EnableOrDisableFlag( DebugViewFlags.ContactPoints );
+                EnableOrDisableFlag( DebugViewFlags.ContactNormals );
+                EnableOrDisableFlag( DebugViewFlags.Controllers );
             }
 
-            if ( input.IsScreenExit() ) {
+            if ( input.IsNewKeyPress( Keys.F1 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Shape );
+            }
+            if ( input.IsNewKeyPress( Keys.F2 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.DebugPanel );
+                EnableOrDisableFlag( DebugViewFlags.PerformanceGraph );
+            }
+            if ( input.IsNewKeyPress( Keys.F3 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Joint );
+            }
+            if ( input.IsNewKeyPress( Keys.F4 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.ContactPoints );
+                EnableOrDisableFlag( DebugViewFlags.ContactNormals );
+            }
+            if ( input.IsNewKeyPress( Keys.F5 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.PolygonPoints );
+            }
+            if ( input.IsNewKeyPress( Keys.F6 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.Controllers );
+            }
+            if ( input.IsNewKeyPress( Keys.F7 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.CenterOfMass );
+            }
+            if ( input.IsNewKeyPress( Keys.F8 ) ) {
+                EnableOrDisableFlag( DebugViewFlags.AABB );
+            }
+
+            if ( input.IsNewButtonPress( Buttons.Back ) || input.IsNewKeyPress( Keys.Escape ) ) {
                 ExitScreen();
             }
 
@@ -151,104 +175,84 @@ namespace Circular.Levels {
 
         private void HandleCamera ( InputHelper input, GameTime gameTime ) {
             Vector2 camMove = Vector2.Zero;
-            if ( input.GamePadState.IsButtonDown( Buttons.RightShoulder ) ) {
-                camMove = input.GamePadState.ThumbSticks.Right * new Vector2( 10f, -10f ) * (float) gameTime.ElapsedGameTime.TotalSeconds;
-                if ( input.GamePadState.IsButtonDown( Buttons.RightTrigger ) ) {
-                    Camera.Zoom += 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
-                }
-                if ( input.GamePadState.IsButtonDown( Buttons.LeftTrigger ) ) {
-                    Camera.Zoom -= 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
-                }
-                if ( input.IsNewButtonPress( Buttons.X ) ) {
-                    Camera.ResetCamera();
-                }
+
+            if ( input.KeyboardState.IsKeyDown( Keys.Up ) ) {
+                camMove.Y -= 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
             }
-            else {
-                if ( input.KeyboardState.IsKeyDown( Keys.Up ) ) {
-                    camMove.Y -= 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.Down ) ) {
-                    camMove.Y += 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.Left ) ) {
-                    camMove.X -= 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.Right ) ) {
-                    camMove.X += 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.PageUp ) ) {
-                    Camera.Zoom += 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.PageDown ) ) {
-                    Camera.Zoom -= 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
-                }
-                if ( input.IsNewKeyPress( Keys.Home ) ) {
-                    Camera.ResetCamera();
-                }
+            if ( input.KeyboardState.IsKeyDown( Keys.Down ) ) {
+                camMove.Y += 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.Left ) ) {
+                camMove.X -= 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.Right ) ) {
+                camMove.X += 10f * (float) gameTime.ElapsedGameTime.TotalSeconds;
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.PageUp ) ) {
+                Camera.Zoom += 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.PageDown ) ) {
+                Camera.Zoom -= 5f * (float) gameTime.ElapsedGameTime.TotalSeconds * Camera.Zoom / 20f;
             }
             if ( camMove != Vector2.Zero ) {
                 Camera.MoveCamera( camMove );
             }
+            if ( input.IsNewKeyPress( Keys.Home ) ) {
+                Camera.ResetCamera();
+            }
         }
 
         private void HandleUserAgent ( InputHelper input ) {
-            Vector2 force = Vector2.Zero;
-            float torque = 0f;
+            Vector2 force = _agentForce * new Vector2( input.GamePadState.ThumbSticks.Right.X,
+                                                      -input.GamePadState.ThumbSticks.Right.Y );
+            float torque = _agentTorque * ( input.GamePadState.Triggers.Right - input.GamePadState.Triggers.Left );
 
-            if ( !input.GamePadState.IsButtonDown( Buttons.RightShoulder ) ) {
-                force = _agentForce * new Vector2( input.GamePadState.ThumbSticks.Right.X, -input.GamePadState.ThumbSticks.Right.Y );
-                torque = _agentTorque * ( input.GamePadState.Triggers.Right - input.GamePadState.Triggers.Left );
+            _userAgent.ApplyForce( force );
+            _userAgent.ApplyTorque( torque );
+
+            float forceAmount = _agentForce * 0.6f;
+
+            force = Vector2.Zero;
+            torque = 0;
+
+            if ( input.KeyboardState.IsKeyDown( Keys.A ) ) {
+                force += new Vector2( -forceAmount, 0 );
             }
-
-            if ( force == Vector2.Zero && torque == 0f ) {
-                float forceAmount = _agentForce * 0.6f;
-
-                if ( input.KeyboardState.IsKeyDown( Keys.A ) ) {
-                    force += new Vector2( -forceAmount, 0 );
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.S ) ) {
-                    force += new Vector2( 0, forceAmount );
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.D ) ) {
-                    force += new Vector2( forceAmount, 0 );
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.W ) ) {
-                    force += new Vector2( 0, -forceAmount );
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.Q ) ) {
-                    torque -= _agentTorque;
-                }
-                if ( input.KeyboardState.IsKeyDown( Keys.E ) ) {
-                    torque += _agentTorque;
-                }
+            if ( input.KeyboardState.IsKeyDown( Keys.S ) ) {
+                force += new Vector2( 0, forceAmount );
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.D ) ) {
+                force += new Vector2( forceAmount, 0 );
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.W ) ) {
+                force += new Vector2( 0, -forceAmount );
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.Q ) ) {
+                torque -= _agentTorque;
+            }
+            if ( input.KeyboardState.IsKeyDown( Keys.E ) ) {
+                torque += _agentTorque;
             }
 
             _userAgent.ApplyForce( force );
             _userAgent.ApplyTorque( torque );
         }
 
+        private void EnableOrDisableFlag ( DebugViewFlags flag ) {
+            if ( ( DebugView.Flags & flag ) == flag ) {
+                DebugView.RemoveFlags( flag );
+            }
+            else {
+                DebugView.AppendFlags( flag );
+            }
+        }
+
         public override void Draw ( GameTime gameTime ) {
             Matrix projection = Camera.SimProjection;
             Matrix view = Camera.SimView;
 
-            if ( _renderDebug ) {
-                if ( _flagsChanged ) {
-                    DebugView.Flags = _flags;
-                    _flagsChanged = false;
-                }
-                DebugView.RenderDebugData( ref projection, ref view );
-            }
+            DebugView.RenderDebugData( ref projection, ref view );
             base.Draw( gameTime );
         }
-
-        #region Demo description
-        public virtual string GetTitle () {
-            return "GetTitle() not implemented, override it for a proper title.";
-        }
-
-        public virtual string GetDetails () {
-            return "GetDetails() not implemented, override it for a proper demo description.";
-        }
-        #endregion
     }
 }
