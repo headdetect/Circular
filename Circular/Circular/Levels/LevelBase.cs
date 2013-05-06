@@ -280,7 +280,7 @@ namespace Circular.Levels {
             //Since it is a concave polygon, we need to partition it into several smaller convex polygons
 
             //scale the vertices from graphics space to sim space
-
+            //Settings.MaxPolygonVertices = 1000;
             var list = BayazitDecomposer.ConvexPartition( textureVertices );
             
             Vector2 vertScale = new Vector2( ConvertUnits.ToSimUnits( 1 ) ) * scale;

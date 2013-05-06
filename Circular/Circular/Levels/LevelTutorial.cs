@@ -20,10 +20,10 @@ namespace Circular.Levels {
         private float _acceleration;
         private Body _board;
         private PrimitiveSprite _box;
-        private List < Body > _boxes;
+        private List<Body> _boxes;
 
         private PrimitiveSprite _bridge;
-        private List < Body > _bridgeSegments;
+        private List<Body> _bridgeSegments;
         private Body _car;
         private PrimitiveSprite _carBody;
         private Body _ground;
@@ -69,8 +69,8 @@ namespace Circular.Levels {
             EnableCameraControl = true;
             HasVirtualStick = true;
 
-            _hzFront = 8.5f;
-            _hzBack = 5.0f;
+            _hzFront = 9.5f;
+            _hzBack = 6.0f;
             _zeta = 1f;
             _maxSpeed = 150.0f;
 
@@ -80,12 +80,12 @@ namespace Circular.Levels {
             _scale = 1f;
 #endif
 
-            _mapScale = 5;
+            _mapScale = 2;
 
             _groundTex = ContentHelper.GetTexture( "tutorial" );
             var terrain = GetVertsFromMapImage( _groundTex, _mapScale, out _groundOrigin );
             // terrain
-            
+
             _ground = BodyFactory.CreateCompoundPolygon( World, terrain, 1f, BodyType.Static );
             _ground.Friction = 1f;
 
@@ -176,28 +176,29 @@ namespace Circular.Levels {
                 vertices.Add( new Vector2( 2.3f, 0.33f ) );
                 vertices.Add( new Vector2( -2.25f, 0.35f ) );
 
-                var chassis = new PolygonShape( vertices, 2f );
+                var chassis = new PolygonShape( vertices, 1f );
 
                 _car = new Body( World );
                 _car.BodyType = BodyType.Dynamic;
                 _car.Position = new Vector2( 0.0f, -1.0f );
                 _car.CreateFixture( chassis );
+                //_car.AngularDamping = 24f;
 
                 _wheelBack = new Body( World );
                 _wheelBack.BodyType = BodyType.Dynamic;
                 _wheelBack.Position = new Vector2( -1.709f, -0.78f );
-                Fixture fix = _wheelBack.CreateFixture( new CircleShape( 0.5f, .8f ) );
+                Fixture fix = _wheelBack.CreateFixture( new CircleShape( 0.5f, .2f ) );
                 fix.Friction = 1f;
 
                 _wheelFront = new Body( World );
                 _wheelFront.BodyType = BodyType.Dynamic;
                 _wheelFront.Position = new Vector2( 1.54f, -0.8f );
-                _wheelFront.CreateFixture( new CircleShape( 0.5f, 1f ) );
+                _wheelFront.CreateFixture( new CircleShape( 0.5f, .2f ) ).Friction = 1f;
 
                 var axis = new Vector2( 0.0f, -1.2f );
                 _springBack = new LineJoint( _car, _wheelBack, _wheelBack.Position, axis );
                 _springBack.MotorSpeed = 0.0f;
-                _springBack.MaxMotorTorque = 80.0f;
+                _springBack.MaxMotorTorque = 90.0f;
                 _springBack.MotorEnabled = true;
                 _springBack.Frequency = _hzBack;
                 _springBack.DampingRatio = _zeta;
@@ -205,7 +206,7 @@ namespace Circular.Levels {
 
                 _springFront = new LineJoint( _car, _wheelFront, _wheelFront.Position, axis );
                 _springFront.MotorSpeed = 0.0f;
-                _springFront.MaxMotorTorque = 40.0f;
+                _springFront.MaxMotorTorque = 60.0f;
                 _springFront.MotorEnabled = false;
                 _springFront.Frequency = _hzFront;
                 _springFront.DampingRatio = _zeta;
@@ -216,16 +217,16 @@ namespace Circular.Levels {
                 _wheel = new PrimitiveSprite( ContentHelper.GetTexture( "wheel" ) );
             }
 
-            Camera.MinRotation = -0.05f;
-            Camera.MaxRotation = 0.05f;
+            Camera.MinRotation = -0.01f;
+            Camera.MaxRotation = 0.01f;
 
             Camera.TrackingBody = _car;
             Camera.EnableTracking = true;
 
             //Just for preview stuff
-            _car.Position -= ConvertUnits.ToSimUnits( 0, 300 );
-            _wheelBack.Position -= ConvertUnits.ToSimUnits( 0, 300 );
-            _wheelFront.Position -= ConvertUnits.ToSimUnits( 0, 300 );
+            _car.Position -= ConvertUnits.ToSimUnits( 3600, 300 );
+            _wheelBack.Position -= ConvertUnits.ToSimUnits( 3600, 300 );
+            _wheelFront.Position -= ConvertUnits.ToSimUnits( 3600, 300 );
             Camera.Position -= new Vector2( 0, 300 );
         }
 
@@ -237,17 +238,17 @@ namespace Circular.Levels {
         }
 
         public override void HandleInput ( InputHelper input, GameTime gameTime ) {
-            if ( input.VirtualState.ThumbSticks.Left.X > 0.5f ) {
-                _acceleration = Math.Min( _acceleration + (float) ( 2.0 * gameTime.ElapsedGameTime.TotalSeconds ), 1f );
-            }
-            else if ( input.VirtualState.ThumbSticks.Left.X < -0.5f ) {
-                _acceleration = Math.Max( _acceleration - (float) ( 2.0 * gameTime.ElapsedGameTime.TotalSeconds ), -1f );
-            }
-            else if ( input.VirtualState.Buttons.A == ButtonState.Pressed ) {
+            if ( input.VirtualState.ThumbSticks.Left.X > 0.5f || input.GamePadState.IsButtonDown( Buttons.RightTrigger ) ) {
+                _acceleration = Math.Min( _acceleration + (float)( 2.0 * gameTime.ElapsedGameTime.TotalSeconds ), 1f );
+            } else if ( input.VirtualState.ThumbSticks.Left.X < -0.5f || input.GamePadState.IsButtonDown( Buttons.LeftTrigger ) ) {
+                _acceleration = Math.Max( _acceleration - (float)( 2.0 * gameTime.ElapsedGameTime.TotalSeconds ), -1f );
+            } else if ( input.VirtualState.Buttons.A == ButtonState.Pressed ) {
                 _acceleration = 0f;
-            }
-            else {
-                _acceleration -= Math.Sign( _acceleration ) * (float) ( 2.0 * gameTime.ElapsedGameTime.TotalSeconds );
+            } else if ( input.IsNewKeyPress(Keys.R) || input.IsNewButtonPress(Buttons.X )) {
+                _car.Rotation = 0;
+                _car.Position += ConvertUnits.ToSimUnits( 0, -100 );
+            } else {
+                _acceleration -= Math.Sign( _acceleration ) * (float)( 2.0 * gameTime.ElapsedGameTime.TotalSeconds );
             }
 
             base.HandleInput( input, gameTime );
